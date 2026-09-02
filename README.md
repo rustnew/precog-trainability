@@ -176,6 +176,13 @@ data/meta_dataset.db             312 tasks x 936 controlled experiments (SQLite)
 .github/workflows/reproduce.yml  CI: reruns every script above on each push
 ```
 
+## Contributing
+
+`main` is protected — every change goes through a reviewed PR with CI
+green. See [CONTRIBUTING.md](CONTRIBUTING.md) for what that means in
+practice here (short version: no claim without a script and a number
+behind it, negative results welcome).
+
 ## Citing this work
 
 See [CITATION.cff](CITATION.cff). This is an active research snapshot, not
