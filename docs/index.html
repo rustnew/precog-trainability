@@ -143,7 +143,53 @@
     </section>
 
     <section>
-      <h2><span class="num">01</span>What actually works</h2>
+      <h2><span class="num">01</span>Why this matters</h2>
+      <p>
+        The practical bet is: check a network before you train it — in
+        milliseconds, on CPU, no GPU-hours spent — and skip the initialization
+        choice that would have wasted your training run. Two real examples,
+        pulled directly from our own locked test set, not cherry-picked for
+        effect beyond "these are honestly the clearest to read":
+      </p>
+      <table>
+        <thead><tr><th>Task</th><th class="num">He</th><th class="num">Orthogonal</th><th class="num">Xavier</th><th>Our pick</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>nonlinear_product, dim=7</td>
+            <td class="num">1600 (never converges)</td>
+            <td class="num">1600 (never converges)</td>
+            <td class="num">627 steps</td>
+            <td>Xavier — correct, and the only one that finishes at all</td>
+          </tr>
+          <tr>
+            <td>nonlinear_product, dim=4</td>
+            <td class="num">208 steps</td>
+            <td class="num">140 steps</td>
+            <td class="num">61 steps</td>
+            <td>Xavier — correct, 3.4&times; fewer steps than the worst choice</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Both calls above came from a single forward/backward pass on the
+        untrained network — no training run spent finding out.
+      </p>
+      <p>
+        <strong>What this is not:</strong> a claim about needing <em>less
+        data</em>. We tested that directly — actively selecting which
+        training samples to use instead of random batches — and it made
+        things worse, not better (0/12 tasks improved). The demonstrated
+        gain here is narrower and more honest: skip a training run wasted on
+        a bad initialization, decided for free before training starts. It
+        also isn't universal — the pick above is only right 47% of the time
+        across the full test set (see below); these two are real, verified
+        wins, not the typical case.
+        <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-01T14-37-08Z_explore_active_learning.md">Why the "less data" attempt failed →</a>
+      </p>
+    </section>
+
+    <section>
+      <h2><span class="num">02</span>What actually works</h2>
       <p>
         Ranking three init candidates (Xavier / He / Orthogonal) by their raw
         <code>jacob_cov</code> (NASWOT) score — no training, no learned model —
@@ -170,7 +216,7 @@
     </section>
 
     <section>
-      <h2><span class="num">02</span>The number we got wrong, in public</h2>
+      <h2><span class="num">03</span>The number we got wrong, in public</h2>
       <p>
         Our first controlled experiment (n=36: 12 tasks &times; 3 init methods)
         found <code>gradient_norm_variance</code> correlating with real convergence
@@ -186,7 +232,7 @@
     </section>
 
     <section>
-      <h2><span class="num">03</span>A bug we found but can't fix</h2>
+      <h2><span class="num">04</span>A bug we found but can't fix</h2>
       <p>
         <code>jacob_cov</code> never once recommends "He init" across 60 test
         tasks — including the 10 where it's genuinely fastest. The cause is
@@ -207,7 +253,7 @@
     </section>
 
     <section>
-      <h2><span class="num">04</span>Reproduce it</h2>
+      <h2><span class="num">05</span>Reproduce it</h2>
       <pre><code>pip install -r requirements.txt
 python scripts/gate1_ranking.py              # the original (overestimated) result
 python scripts/gate1_ranking_at_scale.py     # the correction, no retraining needed
@@ -221,7 +267,7 @@ python scripts/compare_meta_predictors.py    # full method comparison + regret</
     </section>
 
     <section>
-      <h2><span class="num">05</span>In the same spirit</h2>
+      <h2><span class="num">06</span>In the same spirit</h2>
       <p>
         We're not affiliated with it, but
         <a href="https://github.com/karpathy/autoresearch">karpathy/autoresearch</a>

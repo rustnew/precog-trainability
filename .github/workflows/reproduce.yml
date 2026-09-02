@@ -39,3 +39,6 @@ jobs:
 
       - name: Learned-combination overfitting check (Leave-One-Task-Out)
         run: python scripts/explore_learned_combination.py
+
+      - name: Active sample selection (the "less data" attempt that failed)
+        run: python scripts/explore_active_learning.py
