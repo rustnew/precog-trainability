@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this code, data, or the reported findings, please cite it as below."
+title: "PRECOG: Zero-Cost Trainability Signals for Hyperparameter Prediction"
+type: software
+authors:
+  - family-names: "Fossouo"
+    given-names: "Martial"
+repository-code: "https://github.com/rustnew/precog-trainability"
+url: "https://github.com/NEURAX-canvas/PRECOG"
+version: 0.1.0
+date-released: "2026-09-02"
+license: MIT
+keywords:
+  - neural-architecture-search
+  - zero-cost-proxies
+  - hyperparameter-optimization
+  - meta-learning
+  - trainability
+  - NASWOT

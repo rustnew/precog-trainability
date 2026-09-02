@@ -1,5 +1,9 @@
 # PRECOG — Can Pre-Training Signals Predict Trainability?
 
+[![Reproduce](https://github.com/rustnew/precog-trainability/actions/workflows/reproduce.yml/badge.svg)](https://github.com/rustnew/precog-trainability/actions/workflows/reproduce.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](requirements.txt)
+
 A research prototype testing whether "zero-cost" signals computed on an
 **untrained** network (before a single optimizer step) can predict which
 hyperparameters will actually train well. Full spec in [docs.md](docs.md).
@@ -159,3 +163,24 @@ yet (see [docs.md §17, §26](docs.md)). This is a snapshot of an ongoing,
 openly-documented research effort — the full project (40+ dated reports,
 every negative result kept) lives at
 [github.com/NEURAX-canvas/PRECOG](https://github.com/NEURAX-canvas/PRECOG).
+
+## Repository layout
+
+```text
+docs.md / stack.md / source.md   full spec, tech-stack rationale, bibliography
+precog/                          the engine: encoders, Trainability Engine,
+                                  Meta-Predictor, Search Engine (see docs.md §9)
+scripts/                         every experiment referenced above, runnable as-is
+results/reports/                 the dated, evidence-first writeup for each finding
+data/meta_dataset.db             312 tasks x 936 controlled experiments (SQLite)
+.github/workflows/reproduce.yml  CI: reruns every script above on each push
+```
+
+## Citing this work
+
+See [CITATION.cff](CITATION.cff). This is an active research snapshot, not
+a peer-reviewed publication — cite accordingly.
+
+## License
+
+[MIT](LICENSE).

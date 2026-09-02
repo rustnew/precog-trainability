@@ -1,0 +1,41 @@
+name: Reproduce
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Gate 1 -- original (small-sample) result
+        run: python scripts/gate1_ranking.py
+
+      - name: Gate 1 -- full-scale correction (no new training, reads data/meta_dataset.db)
+        run: python scripts/gate1_ranking_at_scale.py
+
+      - name: Xavier/He scale-invariance audit
+        run: python scripts/explore_scale_invariance_blindspot.py
+
+      - name: Full method comparison (accuracy + regret)
+        run: python scripts/compare_meta_predictors.py
+
+      - name: OOD family-holdout generalization
+        run: python scripts/explore_ood_generalization.py
+
+      - name: Learned-combination overfitting check (Leave-One-Task-Out)
+        run: python scripts/explore_learned_combination.py
