@@ -7,6 +7,7 @@
 A research prototype testing whether "zero-cost" signals computed on an
 **untrained** network (before a single optimizer step) can predict which
 hyperparameters will actually train well. Full spec in [docs.md](docs.md).
+**[Project page →](https://rustnew.github.io/precog-trainability/)**
 
 This is a curated subset of a larger project. It exists to show three
 things honestly, in order: **a real positive finding, a headline number
