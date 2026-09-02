@@ -159,3 +159,4 @@ yet (see [docs.md §17, §26](docs.md)). This is a snapshot of an ongoing,
 openly-documented research effort — the full project (40+ dated reports,
 every negative result kept) lives at
 [github.com/NEURAX-canvas/PRECOG](https://github.com/NEURAX-canvas/PRECOG).
+
