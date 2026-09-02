@@ -26,7 +26,7 @@ meta-learning, the last two sections are where we'd like your help.
   "less data" claim — we tested that directly (active sample selection)
   and it made things worse, see §5 below. Not universal either — right
   47% of the time overall, these two are verified wins, not the average case.
-- Best method found: **`jacob_cov`** (NASWOT, Mellor et al. 2021), used
+- Best method found: **`jacob_cov`** ([NASWOT](https://arxiv.org/abs/2006.04647), Mellor et al. 2021), used
   directly as a decision rule with **zero training, zero learned model** —
   beats 4 RandomForest variants, a Gaussian Process, KNN, and 3 different
   ways of combining proxies. 47% top-1 accuracy picking the best of 3
@@ -41,9 +41,12 @@ meta-learning, the last two sections are where we'd like your help.
 
 ## 1. What actually works
 
-`precog/trainability.py` implements 11 zero-cost proxies (SynFlow, SNIP,
-GraSP, Jacob-Cov/NASWOT, effective rank, Hessian trace, Jacobian
-conditioning, gradient statistics, ZiCo). `scripts/compare_meta_predictors.py`
+`precog/trainability.py` implements 11 zero-cost proxies ([SynFlow](https://arxiv.org/abs/2006.05467),
+[SNIP](https://arxiv.org/abs/1810.02340), [GraSP](https://arxiv.org/abs/2002.07376),
+Jacob-Cov/[NASWOT](https://arxiv.org/abs/2006.04647), [effective rank](https://arxiv.org/abs/2408.08776) (NEAR),
+Hessian trace, Jacobian conditioning, gradient statistics, [ZiCo](https://arxiv.org/abs/2301.11300)).
+Full citations for every method, including ones tested and not promoted: [source.md](source.md).
+`scripts/compare_meta_predictors.py`
 evaluates every method — RandomForest (full/reduced features, log-target),
 Gaussian Process, k-NN, raw proxy heuristics, learned/rank/naive proxy
 combinations — on one **locked** test split (60 tasks never touched during
@@ -60,7 +63,7 @@ all. Every attempt to do better with more sophistication failed:
 | Combination method | Ranking correlation (ρ) |
 |---|---:|
 | naive z-score average | 0.365 |
-| AZ-NAS-style rank aggregation (CVPR 2024) | 0.410 |
+| [AZ-NAS](https://arxiv.org/abs/2403.19232)-style rank aggregation (CVPR 2024) | 0.410 |
 | learned linear combination (Ridge, proper Leave-One-Task-Out CV) | 0.504 |
 | **best single proxy alone** | **0.540** |
 

@@ -42,3 +42,6 @@ jobs:
 
       - name: Active sample selection (the "less data" attempt that failed)
         run: python scripts/explore_active_learning.py
+
+      - name: LSUV data-aware init (4th candidate, underperformed)
+        run: python scripts/explore_lsuv_init.py

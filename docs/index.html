@@ -192,7 +192,7 @@
       <h2><span class="num">02</span>What actually works</h2>
       <p>
         Ranking three init candidates (Xavier / He / Orthogonal) by their raw
-        <code>jacob_cov</code> (NASWOT) score — no training, no learned model —
+        <code>jacob_cov</code> (<a href="https://arxiv.org/abs/2006.04647">NASWOT</a>) score — no training, no learned model —
         beats four RandomForest variants, a Gaussian Process, k-NN, and three
         different ways of combining proxies, measured on a <strong>locked</strong>
         60-task test split never touched during development.
@@ -201,7 +201,7 @@
         <thead><tr><th>Combination method</th><th class="num">Ranking correlation (&rho;)</th></tr></thead>
         <tbody>
           <tr><td>naive z-score average</td><td class="num">0.365</td></tr>
-          <tr><td>AZ-NAS-style rank aggregation (CVPR 2024)</td><td class="num">0.410</td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2403.19232">AZ-NAS</a>-style rank aggregation (CVPR 2024)</td><td class="num">0.410</td></tr>
           <tr><td>learned linear combination (Ridge, Leave-One-Task-Out CV)</td><td class="num">0.504</td></tr>
           <tr class="win"><td>best single proxy alone</td><td class="num">0.540</td></tr>
         </tbody>
@@ -267,7 +267,35 @@ python scripts/compare_meta_predictors.py    # full method comparison + regret</
     </section>
 
     <section>
-      <h2><span class="num">06</span>In the same spirit</h2>
+      <h2><span class="num">06</span>References</h2>
+      <p>
+        Every method named above, linked to the actual paper — not a survey
+        mention, the source:
+      </p>
+      <table>
+        <thead><tr><th>Method</th><th>Paper</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td>NASWOT / <code>jacob_cov</code></td><td><a href="https://arxiv.org/abs/2006.04647">Mellor et al., 2021</a></td><td>the best-evidenced method (§2)</td></tr>
+          <tr><td>SynFlow</td><td><a href="https://arxiv.org/abs/2006.05467">Tanaka et al., 2020</a></td><td>zero-cost proxy, weak on this benchmark</td></tr>
+          <tr><td>SNIP</td><td><a href="https://arxiv.org/abs/1810.02340">Lee et al., 2019</a></td><td>zero-cost proxy</td></tr>
+          <tr><td>GraSP</td><td><a href="https://arxiv.org/abs/2002.07376">Wang et al., 2020</a></td><td>zero-cost proxy</td></tr>
+          <tr><td>NEAR / effective rank</td><td><a href="https://arxiv.org/abs/2408.08776">Husistein et al., 2025</a></td><td>expressivity proxy</td></tr>
+          <tr><td>ZiCo</td><td><a href="https://arxiv.org/abs/2301.11300">Li et al., 2023</a></td><td><a href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-01T22-12-09Z_gate1_ranking.md">tested, rho=0.328, not promoted</a></td></tr>
+          <tr><td>AZ-NAS (rank aggregation)</td><td><a href="https://arxiv.org/abs/2403.19232">Lee et al., CVPR 2024</a></td><td>combination method, §2 above</td></tr>
+          <tr><td>LSUV</td><td><a href="https://arxiv.org/abs/1511.06422">Mishkin &amp; Matas, 2015</a></td><td>data-aware init, <a href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-01T14-29-10Z_explore_lsuv_init.md">tested, underperformed</a></td></tr>
+          <tr><td>Zero-Cost Proxies survey</td><td><a href="https://arxiv.org/abs/2101.08134">Abdelfattah et al., ICLR 2021</a></td><td>basis for the proxy set in <code>precog/trainability.py</code></td></tr>
+        </tbody>
+      </table>
+      <p>
+        Full bibliography, including hyperparameter optimization, meta-learning,
+        dynamical isometry, and active-learning literature not directly
+        implemented yet:
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/source.md">source.md</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2><span class="num">07</span>In the same spirit</h2>
       <p>
         We're not affiliated with it, but
         <a href="https://github.com/karpathy/autoresearch">karpathy/autoresearch</a>
