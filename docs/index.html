@@ -7,22 +7,23 @@
 <meta name="description" content="A research prototype testing whether zero-cost signals computed on an untrained network can predict trainability. A real finding, a headline number we walked back, and a mathematical bug we couldn't fix.">
 <style>
   :root {
-    --bg: #fbfaf7;
-    --ink: #1b1a17;
-    --muted: #5c584f;
-    --accent: #9a3324;
-    --line: #ddd7c9;
-    --card: #ffffff;
-    --code-bg: #211f1a;
-    --code-ink: #e8e4d8;
+    --bg: #ffffff;
+    --ink: #111111;
+    --muted: #6b6b6b;
+    --accent: #1a56db;
+    --line: #e7e7e7;
+    --card: #fafafa;
+    --code-bg: #111111;
+    --code-ink: #f2f2f2;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
-    line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
   }
   .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
   header.hero {
@@ -216,6 +217,24 @@ python scripts/compare_meta_predictors.py    # full method comparison + regret</
         <code>data/meta_dataset.db</code> ships with the repo (312 tasks, 936
         controlled experiments) so every scale-corrected result reproduces
         without rerunning any training. CI reruns all of the above on every push.
+      </p>
+    </section>
+
+    <section>
+      <h2><span class="num">05</span>In the same spirit</h2>
+      <p>
+        We're not affiliated with it, but
+        <a href="https://github.com/karpathy/autoresearch">karpathy/autoresearch</a>
+        is the closest thing we've seen to the same underlying instinct: fix a
+        tight, cheap experimental loop (there, a 5-minute training budget and one
+        metric; here, controlled synthetic tasks and a locked test split), then
+        let the loop run fast enough, and honestly enough, that what survives
+        it is worth trusting. Different problem — that project is about an
+        autonomous agent iterating on training code overnight, this one is
+        about predicting hyperparameters before training starts — but the same
+        bet: rigor and speed aren't in tension if the loop is small enough to
+        run a lot, and log every result, wins and failures alike, without
+        editorializing.
       </p>
     </section>
 
