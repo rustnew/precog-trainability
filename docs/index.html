@@ -4,7 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PRECOG — Predictive Configuration &amp; Trainability Engine</title>
-<meta name="description" content="PRECOG's full scientific specification and research roadmap: hypotheses, architecture, metrics, gates and known limitations, for a system that predicts trainability before training.">
+<meta name="description" content="PRECOG's full research specification: predicting a network's trainability before a single training step, from hypotheses and architecture to metrics, gates, and known limitations.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PRECOG — Predictive Configuration &amp; Trainability Engine">
+<meta property="og:description" content="PRECOG's full research specification: predicting a network's trainability before a single training step, from hypotheses and architecture to metrics, gates, and known limitations.">
+<meta property="og:url" content="https://rustnew.github.io/precog-trainability/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PRECOG — Predictive Configuration &amp; Trainability Engine">
+<meta name="twitter:description" content="PRECOG's full research specification: predicting a network's trainability before a single training step, from hypotheses and architecture to metrics, gates, and known limitations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
 <script>
   window.MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
 </script>
@@ -12,117 +22,198 @@
 <style>
   :root {
     --bg: #ffffff;
-    --ink: #111111;
-    --muted: #6b6b6b;
+    --bg-soft: #fbfbfa;
+    --ink: #14161a;
+    --muted: #6b7078;
+    --faint: #9a9fa6;
     --accent: #1a56db;
-    --line: #e7e7e7;
-    --card: #fafafa;
-    --code-bg: #111111;
-    --code-ink: #f2f2f2;
+    --accent-soft: #eef2ff;
+    --line: #e9e9e7;
+    --card: #f7f7f5;
+    --code-bg: #14161a;
+    --code-ink: #eef0f2;
+    --serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    line-height: 1.65;
+    font-family: var(--serif);
+    line-height: 1.7;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   a { color: var(--accent); }
+  ::selection { background: var(--accent-soft); }
 
   header.hero {
     border-bottom: 1px solid var(--line);
-    padding: 32px 24px;
+    background:
+      radial-gradient(560px 220px at 12% -20%, var(--accent-soft), transparent 70%),
+      var(--bg-soft);
   }
-  header.hero .inner { max-width: 1100px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 16px; }
+  header.hero .inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 72px 24px 44px;
+  }
   header.hero .eyebrow {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 13px;
-    letter-spacing: 0.08em;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--accent);
-    margin: 0 0 6px;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  header.hero h1 { font-size: 1.6rem; margin: 0; line-height: 1.2; }
-  header.hero .tagline { color: var(--muted); margin: 4px 0 0; max-width: 60ch; font-size: 0.95rem; }
-  header.hero .links { display: flex; gap: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
-  header.hero .links a { text-decoration: none; border-bottom: 1px solid var(--line); }
+  header.hero .eyebrow::before {
+    content: "";
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  header.hero h1 { font-size: clamp(2rem, 4vw, 2.6rem); margin: 0 0 14px; line-height: 1.15; letter-spacing: -0.01em; }
+  header.hero .tagline { color: var(--muted); margin: 0 0 28px; max-width: 62ch; font-size: 1.08rem; }
+  header.hero .links { display: flex; flex-wrap: wrap; gap: 10px; }
+  header.hero .links a {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    background: var(--bg);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  header.hero .links a:hover { border-color: var(--accent); background: var(--accent-soft); }
+  header.hero .links a.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  header.hero .links a.primary:hover { background: #000; }
+  header.hero .disclaimer {
+    margin: 32px 0 0;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 0.85rem;
+    max-width: 62ch;
+  }
+  header.hero .disclaimer strong { color: var(--ink); }
 
-  .layout { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+  .layout {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 44px 24px 100px;
+    display: grid;
+    grid-template-columns: 232px minmax(0, 720px);
+    gap: 56px;
+  }
 
-  nav.toc { position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 0.85rem; }
+  nav.toc { position: sticky; top: 28px; max-height: calc(100vh - 56px); overflow-y: auto; font-size: 0.84rem; padding-right: 4px; }
   nav.toc > ul { list-style: none; margin: 0; padding: 0; }
   nav.toc ul ul { list-style: none; margin: 0; padding-left: 14px; }
-  nav.toc li { margin: 3px 0; }
-  nav.toc a { color: var(--muted); text-decoration: none; display: block; padding: 2px 0; }
-  nav.toc a:hover { color: var(--ink); }
-  nav.toc .toc-title { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; color: var(--accent); margin: 0 0 10px; }
-
-  main.doc { min-width: 0; }
-  main.doc > h1:first-child { display: none; }
-  main.doc h2 { font-size: 1.15rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.02em; color: var(--accent); margin: 48px 0 16px; scroll-margin-top: 24px; }
-  main.doc h2:first-of-type { margin-top: 0; }
-  main.doc h3 { font-size: 1.02rem; margin: 32px 0 12px; scroll-margin-top: 24px; }
-  main.doc h4 { font-size: 0.95rem; color: var(--muted); margin: 24px 0 10px; scroll-margin-top: 24px; }
-  main.doc p { margin: 0 0 16px; }
-  main.doc ul, main.doc ol { margin: 0 0 16px; padding-left: 1.4em; }
-  main.doc li { margin: 4px 0; }
-  main.doc li > p { margin: 0; }
-  main.doc hr { border: none; border-top: 1px solid var(--line); margin: 40px 0; }
-
-  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; display: block; overflow-x: auto; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--card); border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
-  pre {
-    background: var(--code-bg);
-    color: var(--code-ink);
-    padding: 16px 18px;
-    border-radius: 5px;
-    overflow-x: auto;
-    font-size: 0.82rem;
-    line-height: 1.5;
-    margin: 0 0 20px;
+  nav.toc li { margin: 1px 0; }
+  nav.toc a {
+    color: var(--muted); text-decoration: none; display: block;
+    padding: 4px 8px; border-radius: 5px; border-left: 2px solid transparent;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
   }
-  pre code { background: none; border: none; padding: 0; color: inherit; }
+  nav.toc a:hover { color: var(--ink); background: var(--card); }
+  nav.toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; background: var(--accent-soft); }
+  nav.toc .toc-title { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; font-weight: 600; color: var(--faint); margin: 0 0 10px; padding: 0 8px; }
+
+  main.doc { min-width: 0; max-width: 720px; }
+  main.doc h2 {
+    font-size: 1.05rem; font-family: var(--mono); font-weight: 600;
+    letter-spacing: 0.01em; color: var(--ink);
+    margin: 56px 0 18px; scroll-margin-top: 28px;
+    display: flex; align-items: baseline; gap: 10px;
+    padding-top: 28px; border-top: 1px solid var(--line);
+  }
+  main.doc > h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+  main.doc h2 .num, main.doc h3 .num {
+    font-family: var(--mono); color: var(--accent); font-weight: 600;
+    background: var(--accent-soft); border-radius: 5px; padding: 1px 7px;
+    font-size: 0.82em; flex-shrink: 0;
+  }
+  main.doc h3 { font-size: 1.0rem; font-weight: 600; margin: 34px 0 12px; scroll-margin-top: 28px; display: flex; align-items: baseline; gap: 9px; }
+  main.doc h3 .num.sub { font-size: 0.78em; }
+  main.doc h4 { font-size: 0.92rem; font-weight: 600; color: var(--muted); margin: 26px 0 10px; scroll-margin-top: 28px; }
+  main.doc p { margin: 0 0 17px; color: #23262b; }
+  main.doc ul, main.doc ol { margin: 0 0 17px; padding-left: 1.35em; color: #23262b; }
+  main.doc li { margin: 5px 0; }
+  main.doc li > p { margin: 0; }
+  main.doc hr { border: none; border-top: 1px solid var(--line); margin: 8px 0; display: none; }
+  main.doc strong { color: var(--ink); font-weight: 600; }
+
+  .table-scroll { overflow-x: auto; margin: 4px 0 22px; border: 1px solid var(--line); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  th { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; color: var(--muted); background: var(--bg-soft); white-space: nowrap; }
+
+  code { font-family: var(--mono); background: var(--card); border: 1px solid var(--line); padding: 1.5px 6px; border-radius: 4px; font-size: 0.88em; }
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    padding: 18px 20px; border-radius: 8px; overflow-x: auto;
+    font-size: 0.8rem; line-height: 1.55; margin: 4px 0 22px;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: 1em; }
+  pre.diagram { font-size: 0.74rem; }
 
   blockquote {
-    margin: 20px 0;
-    padding: 4px 20px;
-    border-left: 3px solid var(--accent);
-    color: var(--muted);
-    font-style: italic;
+    margin: 22px 0; padding: 14px 20px; border-left: 3px solid var(--accent);
+    background: var(--accent-soft); border-radius: 0 8px 8px 0;
+    color: #2b3550; font-style: normal;
   }
-  blockquote p:last-child { margin-bottom: 0; }
+  blockquote p { color: inherit; margin: 0; }
+  blockquote p + p { margin-top: 10px; }
 
-  footer { border-top: 1px solid var(--line); padding: 32px 24px 60px; color: var(--muted); font-size: 0.85rem; text-align: center; }
+  footer { border-top: 1px solid var(--line); padding: 36px 24px 64px; color: var(--muted); font-size: 0.85rem; text-align: center; }
   footer a { color: var(--ink); }
+  footer .sep { color: var(--line); margin: 0 8px; }
 
   details.toc-mobile { display: none; }
 
-  @media (max-width: 860px) {
-    .layout { grid-template-columns: 1fr; padding-top: 16px; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; padding-top: 24px; }
     nav.toc.desktop { display: none; }
-    details.toc-mobile { display: block; margin-bottom: 32px; border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; }
-    details.toc-mobile summary { cursor: pointer; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-transform: uppercase; font-size: 0.8rem; color: var(--accent); }
+    main.doc { max-width: none; }
+    details.toc-mobile {
+      display: block; margin-bottom: 32px; border: 1px solid var(--line);
+      border-radius: 8px; padding: 12px 16px; background: var(--bg-soft);
+    }
+    details.toc-mobile summary {
+      cursor: pointer; font-family: var(--mono); text-transform: uppercase;
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em; color: var(--accent);
+    }
     details.toc-mobile nav.toc { position: static; max-height: none; margin-top: 12px; }
+  }
+  @media (max-width: 560px) {
+    header.hero .inner { padding: 48px 20px 32px; }
   }
 </style>
 </head>
 <body>
   <header class="hero">
     <div class="inner">
-      <div>
-        <p class="eyebrow">Full specification &middot; docs.md</p>
-        <h1>PRECOG</h1>
-        <p class="tagline">Predictive Configuration &amp; Trainability Engine — vision document, scientific specification, and research roadmap.</p>
-      </div>
+      <p class="eyebrow">Full specification &middot; docs.md</p>
+      <h1>PRECOG: Predictive Configuration &amp; Trainability Engine</h1>
+      <p class="tagline">Can signals computed on an <strong>untrained</strong> network — before a single optimizer step — predict which hyperparameters will actually train well? The complete vision document, scientific specification, and research roadmap.</p>
       <div class="links">
-        <a href="https://github.com/rustnew/precog-trainability">Repository</a>
+        <a class="primary" href="https://github.com/rustnew/precog-trainability">View the repository</a>
         <a href="https://github.com/rustnew/precog-trainability#readme">Verified results (README)</a>
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/docs.md">Raw source (docs.md)</a>
       </div>
+      <p class="disclaimer"><strong>Methodological note:</strong> this is a research specification, not a results report. Section 0 below states plainly which numbers are experimental targets versus what has actually been measured — see the README for verified findings, including a corrected result and a documented bug.</p>
     </div>
   </header>
 
@@ -212,7 +303,7 @@
 </div>
 </nav>
     </details>
-    <nav class="toc desktop">
+    <nav class="toc desktop" id="toc-desktop">
       <p class="toc-title">Contents</p>
       <div class="toc">
 <ul>
@@ -297,11 +388,11 @@
 </div>
 
     </nav>
-    <main class="doc">
-      <h2 id="0-methodological-disclaimer">0. Methodological disclaimer</h2>
+    <main class="doc" id="doc">
+      <h2 id="0-methodological-disclaimer"><span class="num">0</span>Methodological disclaimer</h2>
 <p>All numerical values cited in this document (Recall@10 ≥ 90%, Spearman ρ ≥ 0.90, compute reduction ≥ 70%, data reduction, prediction error ≤ 5–10%, etc.) are <strong>experimental targets to be demonstrated</strong>, not results already obtained. The ablation tables shown as examples are <strong>expected templates</strong>, not real measurements. This document is a research specification, not a results report.</p>
-<hr />
-<h2 id="1-executive-summary">1. Executive Summary</h2>
+<hr/>
+<h2 id="1-executive-summary"><span class="num">1</span>Executive Summary</h2>
 <p><strong>PRECOG</strong> is a research system aiming to transform the classic hyperparameter optimization (HPO) problem into a <strong>trainability prediction</strong> problem: from an untrained model, dataset statistics, and a hardware environment, PRECOG seeks to predict — <strong>before any training on real data</strong> — a distribution of learning configurations likely to lead to fast, stable, and data-efficient convergence.</p>
 <p>PRECOG does not replace final training. It precedes and guides the configuration search, drastically reducing the number of full training runs needed to find a good configuration.</p>
 <p>The project's central statement is:</p>
@@ -309,18 +400,18 @@
 <p><strong>PRECOG does not search for the best hyperparameters after training many configurations; it seeks to learn the relationship between a model's initial state, the properties of the problem, and the learning conditions, in order to predict — before any real training — which configurations have the highest probability of leading to fast, efficient convergence.</strong></p>
 </blockquote>
 <p>PRECOG is designed as a hybrid architecture combining six complementary families of methods (zero-cost proxies, NEAR-style expressivity analysis, initialization theory, meta-learning, Bayesian optimization, adaptive short validation), organized in a closed continuous-improvement loop built on a meta-dataset of experiments.</p>
-<hr />
-<h2 id="2-motivation">2. Motivation</h2>
+<hr/>
+<h2 id="2-motivation"><span class="num">2</span>Motivation</h2>
 <p>Classic hyperparameter optimization (grid search, random search, Bayesian Optimization, Hyperband, PBT, etc.) essentially proceeds by <strong>expensive trial and error</strong>: every candidate configuration must be partially or fully trained to be evaluated. This cost becomes prohibitive as models grow.</p>
 <p>Part of the recent literature (zero-cost proxies, training-free NAS, NEAR) shows that it is possible to extract informative signals about the potential quality of an architecture or configuration <strong>without full training</strong>, sometimes from a single mini-batch. These results remain fragmentary, however: no proxy is universally dominant, cross-domain generalization (vision → NLP → LLM) remains uncertain, and this work almost always focuses on ranking architectures rather than fully predicting a learning configuration (learning rate, batch size, initialization, scheduler, etc.).</p>
 <p>PRECOG starts from the hypothesis that these signals, combined with each other and enriched by experience accumulated across many past training runs (meta-learning), can be exploited to build a <strong>configuration predictor</strong>, not merely an architecture ranking.</p>
-<hr />
-<h2 id="3-scientific-problem">3. Scientific Problem</h2>
-<h3 id="31-informal-formulation">3.1 Informal formulation</h3>
+<hr/>
+<h2 id="3-scientific-problem"><span class="num">3</span>Scientific Problem</h2>
+<h3 id="31-informal-formulation"><span class="num sub">3.1</span>Informal formulation</h3>
 <blockquote>
 <p>Given an untrained model M, a dataset D (characterized only by its statistics, without training on it), and a hardware environment H, can we predict a learning configuration θ (fine-grained architecture, initialization, optimizer, learning rate, batch size, regularization, scheduler) that maximizes the probability of reaching a target performance, while minimizing the compute, time, and amount of data needed?</p>
 </blockquote>
-<h3 id="32-mathematical-formulation">3.2 Mathematical formulation</h3>
+<h3 id="32-mathematical-formulation"><span class="num sub">3.2</span>Mathematical formulation</h3>
 <p>$$
 \theta^* = \arg\max_{\theta} \; P\big(\text{Convergence} \geq \text{Target} \mid M, D, H, \theta\big)
 $$</p>
@@ -329,14 +420,14 @@ $$</p>
 P(\theta^* \mid M, D, H)
 $$</p>
 <p><strong>without updating the real model's weights on real data</strong> (see §5 for the strict definition of "without training").</p>
-<h3 id="33-what-precog-is-not">3.3 What PRECOG is not</h3>
+<h3 id="33-what-precog-is-not"><span class="num sub">3.3</span>What PRECOG is not</h3>
 <ul>
 <li>It is <strong>not</strong> a NAS (Neural Architecture Search) in the strict sense: PRECOG can suggest architecture adjustments, but its core is the learning configuration.</li>
 <li>It is <strong>not</strong> a simple wrapper around a Bayesian optimizer (e.g. Google Vizier): Vizier/BO is an internal component (the search engine), not the whole system.</li>
 <li>It is <strong>not</strong> a performance guarantee: it is a probabilistic system that must express its uncertainty.</li>
 </ul>
-<hr />
-<h2 id="4-research-hypotheses">4. Research Hypotheses</h2>
+<hr/>
+<h2 id="4-research-hypotheses"><span class="num">4</span>Research Hypotheses</h2>
 <ul>
 <li><strong>H1 (Pre-training signal):</strong> the state of an untrained network (gradient, Jacobian, activation, spectrum, initialization statistics) contains exploitable information about its future trainability.</li>
 <li><strong>H2 (Non-universality of proxies):</strong> no single signal is sufficient on its own; combining several families of signals is more robust than any one alone.</li>
@@ -346,10 +437,10 @@ $$</p>
 <li><strong>H6 (Correlation ≠ causation):</strong> some observed relationships between pre-training signals and final performance are confounded by third variables (the architecture, in particular); some of these must be tested experimentally before being exploited with confidence.</li>
 </ul>
 <p>Each of these hypotheses must be tested and potentially refuted by the protocols described in §14.</p>
-<hr />
-<h2 id="5-operational-definition-of-without-training-the-three-modes">5. Operational Definition of "Without Training" — the Three Modes</h2>
+<hr/>
+<h2 id="5-operational-definition-of-without-training-the-three-modes"><span class="num">5</span>Operational Definition of "Without Training" — the Three Modes</h2>
 <p>This is the project's most important methodological constraint: it must be unambiguous.</p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Mode</th>
@@ -378,12 +469,12 @@ $$</p>
 <td>Ground-truth generation, never used to "cheat" on the prediction</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p><strong>Contract rule (Zero-Training Contract):</strong> any benchmark claiming PRECOG's central promise ("predict without training") must be carried out exclusively in <strong>PURE</strong> mode. <strong>PROBE</strong> mode is an explicitly, separately measured extension: it must always be possible to answer the question "how much does PROBE add over PURE alone, for what additional cost?".</p>
 <p>In PURE mode, the operations allowed on the dataset are limited to <strong>descriptive statistics</strong> (size, dimensionality, approximate entropy, class imbalance, redundancy, estimated noise) and, if needed, to <strong>forward passes without backpropagation or weight updates</strong> (to measure activations/Jacobian). No <code>optimizer.step()</code> loop is permitted.</p>
-<hr />
-<h2 id="6-positioning-relative-to-the-state-of-the-art">6. Positioning Relative to the State of the Art</h2>
-<table>
+<hr/>
+<h2 id="6-positioning-relative-to-the-state-of-the-art"><span class="num">6</span>Positioning Relative to the State of the Art</h2>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Line of work</th>
@@ -423,10 +514,10 @@ $$</p>
 <td>Already requires partial training observations</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>PRECOG positions itself as an <strong>upstream prediction layer</strong> for these search engines: they remain used as <strong>exploration arms</strong>, fed by a far more informed prior.</p>
-<hr />
-<h2 id="7-fundamental-principles">7. Fundamental Principles</h2>
+<hr/>
+<h2 id="7-fundamental-principles"><span class="num">7</span>Fundamental Principles</h2>
 <ol>
 <li><strong>Observe before testing.</strong> Any information exploitable without training must be exploited before spending compute.</li>
 <li><strong>Never depend on a single signal.</strong> Each family of signals compensates for another's weaknesses (see §9).</li>
@@ -437,9 +528,9 @@ $$</p>
 <li><strong>Correlation ≠ causation.</strong> Relationships exploited in production must, as much as possible, be validated by controlled tests.</li>
 <li><strong>Generalization above all.</strong> A high score on an already-seen benchmark has no scientific value until it is reproduced on tasks, architectures, and datasets never encountered before.</li>
 </ol>
-<hr />
-<h2 id="8-full-architecture">8. Full Architecture</h2>
-<pre><code class="language-text">                         PRECOG
+<hr/>
+<h2 id="8-full-architecture"><span class="num">8</span>Full Architecture</h2>
+<pre class="diagram"><code class="language-text">                         PRECOG
                             │
             ┌───────────────┼────────────────┐
             ▼               ▼                ▼
@@ -507,15 +598,15 @@ $$</p>
                                      ▼
                               PRECOG v(n+1)
 </code></pre>
-<hr />
-<h2 id="9-detailed-components">9. Detailed Components</h2>
-<h3 id="91-model-encoder">9.1 Model Encoder</h3>
+<hr/>
+<h2 id="9-detailed-components"><span class="num">9</span>Detailed Components</h2>
+<h3 id="91-model-encoder"><span class="num sub">9.1</span>Model Encoder</h3>
 <p>Extracts a descriptor vector $X_{model}$ from the architecture alone (no data): depth, width, number of parameters, FLOPs, activation type, normalization, residual-connection ratio, attention structure, required memory.</p>
-<h3 id="92-data-encoder">9.2 Data Encoder</h3>
+<h3 id="92-data-encoder"><span class="num sub">9.2</span>Data Encoder</h3>
 <p>Extracts $X_{data}$ from descriptive statistics allowed in PURE mode: size, dimensionality, entropy, estimated noise, class imbalance, feature correlation, redundancy, distribution. Long-term goal: an embedding $Z_D = \text{Encoder}_{data}(D)$ enabling datasets to be compared by similarity.</p>
-<h3 id="93-hardware-encoder">9.3 Hardware Encoder</h3>
+<h3 id="93-hardware-encoder"><span class="num sub">9.3</span>Hardware Encoder</h3>
 <p>Captures GPU/CPU, memory, bandwidth, numerical precision, batch capacity, interconnect — because the optimal configuration also depends on the execution environment: $\theta^* = f(M, D, H)$.</p>
-<h3 id="94-trainability-engine">9.4 Trainability Engine</h3>
+<h3 id="94-trainability-engine"><span class="num sub">9.4</span>Trainability Engine</h3>
 <p>The system's analytical core. Computes, without any weight update:</p>
 <ul>
 <li><strong>Zero-Cost Proxies</strong>: SynFlow, SNIP, GraSP, Jacob-Cov, gradient and activation statistics on one or a few mini-batches.</li>
@@ -524,13 +615,13 @@ $$</p>
 <li><strong>Curvature</strong> (when measurable at low cost): local Hessian approximations.</li>
 </ul>
 <p>Combination rule: $Score_{ZC} = f(S_1, S_2, ..., S_n)$, never a single isolated score.</p>
-<h3 id="95-regime-detector">9.5 Regime Detector</h3>
+<h3 id="95-regime-detector"><span class="num sub">9.5</span>Regime Detector</h3>
 <p>Classifies the (model, dataset, hardware) tuple into a learning regime (e.g. small model/clean data, large model/noisy data, low data volume, long sequences). Produces a <strong>regime prior</strong> used to constrain the predicted hyperparameter distribution.</p>
-<pre><code class="language-text">(Model, Dataset, Hardware) → Regime → Hyperparameter Prior
+<pre class="diagram"><code class="language-text">(Model, Dataset, Hardware) → Regime → Hyperparameter Prior
 </code></pre>
-<h3 id="96-meta-knowledge-base">9.6 Meta-Knowledge Base</h3>
+<h3 id="96-meta-knowledge-base"><span class="num sub">9.6</span>Meta-Knowledge Base</h3>
 <p>A structured base of all past experiments (see §12), with a <strong>task embedding</strong> mechanism enabling retrieval of the historical experiments closest to a new task, and using that neighborhood as a search prior (experience transfer).</p>
-<h3 id="97-meta-predictor">9.7 Meta-Predictor</h3>
+<h3 id="97-meta-predictor"><span class="num sub">9.7</span>Meta-Predictor</h3>
 <p>A model (or ensemble of models) taking as input:</p>
 <p>$$
 X = [X_{model}, X_{data}, X_{ZC}, X_{NEAR}, X_{init}, X_{regime}]
@@ -544,20 +635,20 @@ $$</p>
 <li>an <strong>uncertainty</strong> attached to each head (e.g. via ensembles, quantile regression, or Bayesian approaches)</li>
 </ul>
 <p>The result is never a single value but a distribution, for example:</p>
-<pre><code class="language-text">Learning rate
+<pre class="diagram"><code class="language-text">Learning rate
   recommended = 3.5e-4
   range       = [2e-4, 6e-4]
   confidence  = 91%
 </code></pre>
-<h3 id="98-search-engine-bo-active-learning-diversity">9.8 Search Engine (BO + Active Learning + Diversity)</h3>
+<h3 id="98-search-engine-bo-active-learning-diversity"><span class="num sub">9.8</span>Search Engine (BO + Active Learning + Diversity)</h3>
 <p>The meta-predictor provides an <strong>informed prior</strong>; the search engine then explores the remaining space. Hybrid acquisition function:</p>
 <p>$$
 Acquisition = \alpha \cdot \text{Expected Improvement} + \beta \cdot \text{Uncertainty} + \gamma \cdot \text{Diversity}
 $$</p>
 <p>Google Vizier / Optuna / BOHB play the role here of <strong>exploration arms</strong>, not the system's brain.</p>
-<h3 id="99-pareto-search-multi-objective-optimization">9.9 Pareto Search (multi-objective optimization)</h3>
+<h3 id="99-pareto-search-multi-objective-optimization"><span class="num sub">9.9</span>Pareto Search (multi-objective optimization)</h3>
 <p>Rather than seeking a single optimum, PRECOG searches for a <strong>Pareto front</strong> over (performance, compute, data, time, memory, energy):</p>
-<pre><code class="language-text">                  Performance
+<pre class="diagram"><code class="language-text">                  Performance
                        ▲
                   A ●
                     \
@@ -568,25 +659,25 @@ $$</p>
                        └──────────────► Cost
 </code></pre>
 <p>PRECOG can then return several Pareto-optimal configurations, leaving it to the user (human or system) to choose according to their constraints.</p>
-<h3 id="910-adaptive-short-probe-probe-mode">9.10 Adaptive Short-Probe (PROBE mode)</h3>
+<h3 id="910-adaptive-short-probe-probe-mode"><span class="num sub">9.10</span>Adaptive Short-Probe (PROBE mode)</h3>
 <p>A short training budget allocated <strong>dynamically</strong> based on uncertainty and intermediate performance:</p>
-<pre><code class="language-text">Candidate A → 50 steps → very poor    → STOP
+<pre class="diagram"><code class="language-text">Candidate A → 50 steps → very poor    → STOP
 Candidate B → 50 steps → promising    → 200 steps
 Candidate C → 50 steps → excellent    → 1000 steps
 </code></pre>
 <p>Formalization: $Budget_i = f(Uncertainty_i, Performance_i)$. This mechanism relies on learning-curve prediction (freeze-thaw) to estimate a <em>time-to-target</em> and decide CONTINUE/STOP.</p>
-<h3 id="911-decision-policy">9.11 Decision Policy</h3>
+<h3 id="911-decision-policy"><span class="num sub">9.11</span>Decision Policy</h3>
 <p>An explicit policy turning PRECOG from a simple predictor into an experimental optimization agent:</p>
 <p>$$
 Policy(s_t) \rightarrow \{\text{TRAIN}, \text{STOP}, \text{EXPLORE}, \text{EXPLOIT}, \text{REQUEST MORE DATA}\}
 $$</p>
-<h3 id="912-causal-discovery-module">9.12 Causal Discovery Module</h3>
+<h3 id="912-causal-discovery-module"><span class="num sub">9.12</span>Causal Discovery Module</h3>
 <p>Separates correlation from causation through controlled experiments: with architecture, dataset, and optimizer fixed, a single candidate variable is varied (e.g. the gradient variance induced by initialization) to observe its isolated effect on convergence, rather than concluding from a simple observational correlation.</p>
-<h3 id="913-ood-distribution-shift-detector">9.13 OOD / Distribution-Shift Detector</h3>
+<h3 id="913-ood-distribution-shift-detector"><span class="num sub">9.13</span>OOD / Distribution-Shift Detector</h3>
 <p>Estimates $P(\text{known task})$. If a new task is judged far from the meta-dataset, PRECOG must automatically increase the validation budget (PROBE mode) rather than make an overconfident PURE prediction.</p>
-<h3 id="914-failure-analysis-engine">9.14 Failure Analysis Engine</h3>
+<h3 id="914-failure-analysis-engine"><span class="num sub">9.14</span>Failure Analysis Engine</h3>
 <p>Categorizes every significant prediction error:</p>
-<pre><code class="language-text">DATA_SHIFT
+<pre class="diagram"><code class="language-text">DATA_SHIFT
 ARCHITECTURE_SHIFT
 INITIALIZATION_FAILURE
 OPTIMIZER_FAILURE
@@ -594,15 +685,15 @@ PROXY_FAILURE
 PREDICTOR_FAILURE
 </code></pre>
 <p>and feeds the improvement cycle (meta-dataset → meta-predictor retraining).</p>
-<h3 id="915-scientific-discovery-engine">9.15 Scientific Discovery Engine</h3>
+<h3 id="915-scientific-discovery-engine"><span class="num sub">9.15</span>Scientific Discovery Engine</h3>
 <p>Longer-term goal: turn observed correlations into hypotheses, test those hypotheses through controlled experiments (see 9.12), and derive general principles of trainability from them (e.g. a candidate relationship $LR^* \approx f(\text{BatchSize}, \text{GradientNoise}, \text{ModelScale})$ to be experimentally verified).</p>
-<pre><code class="language-text">Experiments → Patterns → Correlations → Hypotheses
+<pre class="diagram"><code class="language-text">Experiments → Patterns → Correlations → Hypotheses
    → Controlled experiments → Causal evidence → New principle
 </code></pre>
-<hr />
-<h2 id="10-variables-and-hyperparameters">10. Variables and Hyperparameters</h2>
-<h3 id="101-hierarchy-of-target-hyperparameters-of-the-trained-model">10.1 Hierarchy of target hyperparameters (of the trained model)</h3>
-<table>
+<hr/>
+<h2 id="10-variables-and-hyperparameters"><span class="num">10</span>Variables and Hyperparameters</h2>
+<h3 id="101-hierarchy-of-target-hyperparameters-of-the-trained-model"><span class="num sub">10.1</span>Hierarchy of target hyperparameters (of the trained model)</h3>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Level</th>
@@ -642,9 +733,9 @@ PREDICTOR_FAILURE
 <td>sampling ratio, augmentation, curriculum, amount of data</td>
 </tr>
 </tbody>
-</table>
-<h3 id="102-precogs-internal-hyperparameters-strictly-distinct-from-the-above">10.2 PRECOG's internal hyperparameters (strictly distinct from the above)</h3>
-<table>
+</table></div>
+<h3 id="102-precogs-internal-hyperparameters-strictly-distinct-from-the-above"><span class="num sub">10.2</span>PRECOG's internal hyperparameters (strictly distinct from the above)</h3>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Component</th>
@@ -669,8 +760,8 @@ PREDICTOR_FAILURE
 <td>embedding dimension, history size, meta-predictor learning rate</td>
 </tr>
 </tbody>
-</table>
-<h3 id="103-principle-of-conditional-functions">10.3 Principle of conditional functions</h3>
+</table></div>
+<h3 id="103-principle-of-conditional-functions"><span class="num sub">10.3</span>Principle of conditional functions</h3>
 <p>PRECOG never learns a universal constant, only conditional relationships:</p>
 <p>$$
 LR^* = f(\text{Model}, \text{Dataset}, \text{Initialization}, \text{BatchSize}, \text{Optimizer})
@@ -685,13 +776,13 @@ $$
 \text{Optimizer}^* = f(\text{Model}, \text{Dataset}, \text{LR}, \text{BatchSize})
 $$</p>
 <p>and more generally a joint distribution $P(\theta^* \mid M, D, H)$, with an explicit <strong>interaction graph</strong> between variables (e.g. LR ↔ BatchSize ↔ gradient noise; Architecture ↔ Initialization ↔ signal propagation).</p>
-<hr />
-<h2 id="11-the-central-concept-trainability">11. The Central Concept: Trainability</h2>
-<h3 id="111-operational-definition">11.1 Operational definition</h3>
+<hr/>
+<h2 id="11-the-central-concept-trainability"><span class="num">11</span>The Central Concept: Trainability</h2>
+<h3 id="111-operational-definition"><span class="num sub">11.1</span>Operational definition</h3>
 <p>$$
 \text{Trainability} = f(\text{Gradient}, \text{Jacobian}, \text{Activation}, \text{Curvature}, \text{Conditioning}, \text{Initialization}, \text{Architecture}, \text{Data})
 $$</p>
-<h3 id="112-exploitable-signals">11.2 Exploitable signals</h3>
+<h3 id="112-exploitable-signals"><span class="num sub">11.2</span>Exploitable signals</h3>
 <ul>
 <li>Gradient norm and distribution $\|\nabla_\theta L\|$</li>
 <li>Gradient variance $Var(\nabla_\theta L)$</li>
@@ -701,15 +792,15 @@ $$</p>
 <li>Local curvature $H = \nabla^2_\theta L$ (approximated, when cost allows)</li>
 <li>Initialization properties and their link to dynamical isometry</li>
 </ul>
-<h3 id="113-central-research-question">11.3 Central research question</h3>
+<h3 id="113-central-research-question"><span class="num sub">11.3</span>Central research question</h3>
 <blockquote>
 <p>Which signals, observable on an untrained model, actually predict the future speed and quality of learning — and which are merely artifacts correlated with the architecture?</p>
 </blockquote>
 <p>This question must be addressed both <strong>predictively</strong> (the meta-predictor) and <strong>causally</strong> (the causal discovery module, §9.12).</p>
-<hr />
-<h2 id="12-the-meta-dataset-precogs-scientific-memory">12. The Meta-Dataset: PRECOG's Scientific Memory</h2>
+<hr/>
+<h2 id="12-the-meta-dataset-precogs-scientific-memory"><span class="num">12</span>The Meta-Dataset: PRECOG's Scientific Memory</h2>
 <p>Every experiment — including every failure — must be recorded with, at minimum:</p>
-<pre><code class="language-text">Experiment
+<pre class="diagram"><code class="language-text">Experiment
 ├── Model        (architecture, depth, width, params, FLOPs, activation, norm.)
 ├── Dataset      (size, dimension, entropy, noise, imbalance, diversity)
 ├── Hardware     (GPU/CPU, memory, precision, bandwidth)
@@ -723,9 +814,9 @@ $$</p>
 </code></pre>
 <p>Prediction failures are <strong>kept and labeled</strong> (see Failure Analysis, §9.14): they constitute a learning signal at least as valuable as successes.</p>
 <p><strong>Strict separation:</strong> the meta-dataset is partitioned into TRAIN / VALIDATION / TEST, with the TEST set explicitly locked (never used to improve PRECOG), to avoid <em>benchmark overfitting</em>.</p>
-<hr />
-<h2 id="13-experience-transfer-and-task-embedding">13. Experience Transfer and Task Embedding</h2>
-<pre><code class="language-text">                 New Task
+<hr/>
+<h2 id="13-experience-transfer-and-task-embedding"><span class="num">13</span>Experience Transfer and Task Embedding</h2>
+<pre class="diagram"><code class="language-text">                 New Task
                     │
                     ▼
               Task Encoder
@@ -745,9 +836,9 @@ $$</p>
               Optimization
 </code></pre>
 <p>PRECOG must be able to recognize that a new problem "resembles" a problem already encountered and exploit that similarity as a prior, rather than starting from an uninformed search — this is one of the main expected levers for moving from a merely analytical system to a genuinely intelligent one.</p>
-<hr />
-<h2 id="14-end-to-end-experimental-pipeline">14. End-to-End Experimental Pipeline</h2>
-<pre><code class="language-text">                    ┌──────────────────┐
+<hr/>
+<h2 id="14-end-to-end-experimental-pipeline"><span class="num">14</span>End-to-End Experimental Pipeline</h2>
+<pre class="diagram"><code class="language-text">                    ┌──────────────────┐
                     │  BENCHMARK TASKS │
                     └────────┬─────────┘
                              ▼
@@ -786,9 +877,9 @@ $$</p>
                PRECOG v(n+1)
 </code></pre>
 <p>This loop never stops after a single iteration: every PRECOG generation must be compared to the previous one under a strictly identical protocol.</p>
-<hr />
-<h2 id="15-test-protocols">15. Test Protocols</h2>
-<table>
+<hr/>
+<h2 id="15-test-protocols"><span class="num">15</span>Test Protocols</h2>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Protocol</th>
@@ -828,23 +919,23 @@ $$</p>
 <td>Out-of-distribution performance</td>
 </tr>
 </tbody>
-</table>
-<h3 id="151-trainvalidationtest-separation">15.1 TRAIN/VALIDATION/TEST separation</h3>
-<pre><code class="language-text">PRECOG TRAIN        → known datasets and architectures, experiment history
+</table></div>
+<h3 id="151-trainvalidationtest-separation"><span class="num sub">15.1</span>TRAIN/VALIDATION/TEST separation</h3>
+<pre class="diagram"><code class="language-text">PRECOG TRAIN        → known datasets and architectures, experiment history
 PRECOG VALIDATION   → different datasets, partially new architectures
 PRECOG TEST (locked) → never seen, never used to improve PRECOG
 </code></pre>
-<h3 id="152-reference-benchmarks-for-the-initial-phase">15.2 Reference benchmarks for the initial phase</h3>
+<h3 id="152-reference-benchmarks-for-the-initial-phase"><span class="num sub">15.2</span>Reference benchmarks for the initial phase</h3>
 <ul>
 <li><strong>NATS-Bench</strong> (successor to the now-deprecated NAS-Bench-201): a reference architecture space with pre-computed performance (CIFAR-10, CIFAR-100, ImageNet16-120) — useful for testing ranking without having to train every architecture oneself.</li>
 <li><strong>NAS-Bench-Suite-Zero / JAHS-Bench / HPO-B</strong>: actively maintained benchmarks, the first specifically designed to evaluate zero-cost proxies (see stack.md §4 for the rationale behind these choices over the now poorly-maintained HPOBench).</li>
 <li><strong>Synthetic laboratory</strong> (generated in-house): fully controlled datasets and models (noise, entropy, dimensionality, depth, width), enabling candidate causal variables to be isolated before moving to real benchmarks.</li>
 </ul>
-<h3 id="153-multi-seed-and-statistical-tests">15.3 Multi-seed and statistical tests</h3>
+<h3 id="153-multi-seed-and-statistical-tests"><span class="num sub">15.3</span>Multi-seed and statistical tests</h3>
 <p>Every important experiment is repeated over several seeds, with mean, standard deviation, and confidence interval (95% CI) computed. Comparisons between methods (PRECOG vs. Random, vs. BO, vs. Hyperband, vs. Vizier) use appropriate statistical tests (e.g. a Wilcoxon signed-rank test rather than a t-test when parametric assumptions aren't guaranteed), to avoid declaring superiority based on a lucky seed.</p>
-<hr />
-<h2 id="16-metrics-and-objectives-to-be-demonstrated-not-guaranteed">16. Metrics and Objectives (to be demonstrated, not guaranteed)</h2>
-<table>
+<hr/>
+<h2 id="16-metrics-and-objectives-to-be-demonstrated-not-guaranteed"><span class="num">16</span>Metrics and Objectives (to be demonstrated, not guaranteed)</h2>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Metric</th>
@@ -894,11 +985,11 @@ PRECOG TEST (locked) → never seen, never used to improve PRECOG
 <td>same order of magnitude as on known data</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>These targets are <strong>progression hypotheses</strong>, formalized as successive gates (§17), never presented as already achieved.</p>
-<hr />
-<h2 id="17-progression-gates">17. Progression Gates</h2>
-<pre><code class="language-text">                PRECOG
+<hr/>
+<h2 id="17-progression-gates"><span class="num">17</span>Progression Gates</h2>
+<pre class="diagram"><code class="language-text">                PRECOG
                    │
              GATE 1: ρ ≥ 0.70 ?
                    │
@@ -912,13 +1003,13 @@ PRECOG TEST (locked) → never seen, never used to improve PRECOG
                    │
              GATE 6: Compute reduction ≥ 70% ?
                    │
-             PRECOG &quot;advanced level&quot;
+             PRECOG "advanced level"
 </code></pre>
 <p>Each gate is validated by independent metrics, on locked datasets, before considering the next generation.</p>
-<hr />
-<h2 id="18-comparison-baselines">18. Comparison Baselines</h2>
+<hr/>
+<h2 id="18-comparison-baselines"><span class="num">18</span>Comparison Baselines</h2>
 <p>PRECOG must be systematically compared, at equal budget, against:</p>
-<pre><code class="language-text">Random Search       Grid Search
+<pre class="diagram"><code class="language-text">Random Search       Grid Search
 Bayesian Optimization   Hyperband
 ASHA                 BOHB
 Population Based Training
@@ -927,10 +1018,10 @@ Zero-Cost NAS (proxy alone)
 Meta-learning HPO (without PRECOG's additional layers)
 </code></pre>
 <p>along the axes: final performance, compute, convergence speed, data needed, generalization.</p>
-<hr />
-<h2 id="19-ablation-strategy">19. Ablation Strategy</h2>
-<h3 id="191-pipeline-component-ablation">19.1 Pipeline component ablation</h3>
-<pre><code class="language-text">PRECOG-A = Zero-Cost only
+<hr/>
+<h2 id="19-ablation-strategy"><span class="num">19</span>Ablation Strategy</h2>
+<h3 id="191-pipeline-component-ablation"><span class="num sub">19.1</span>Pipeline component ablation</h3>
+<pre class="diagram"><code class="language-text">PRECOG-A = Zero-Cost only
 PRECOG-B = + NEAR
 PRECOG-C = + Initialization analysis
 PRECOG-D = + Meta-Learning
@@ -940,7 +1031,7 @@ PRECOG-G = + Active Learning / Uncertainty
 PRECOG-H = + Causal Discovery / OOD detection
 </code></pre>
 <p>Expected table example (a template, not real results):</p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>System</th>
@@ -993,25 +1084,25 @@ PRECOG-H = + Causal Discovery / OOD detection
 <td style="text-align: right;">30%</td>
 </tr>
 </tbody>
-</table>
-<h3 id="192-individual-proxy-ablation">19.2 Individual proxy ablation</h3>
+</table></div>
+<h3 id="192-individual-proxy-ablation"><span class="num sub">19.2</span>Individual proxy ablation</h3>
 <p>SynFlow, SNIP, GraSP, Jacobian, NASWOT, Jacob-Cov, Gradient Norm, NEAR — tested individually then in combination, since the literature shows no proxy is universally dominant.</p>
-<h3 id="193-robustness-testing">19.3 Robustness testing</h3>
+<h3 id="193-robustness-testing"><span class="num sub">19.3</span>Robustness testing</h3>
 <p>Deliberate perturbations: dataset noise and imbalance, distribution shift, model depth/width, activation, seed, batch size, hardware — to verify that PRECOG's performance doesn't collapse outside the meta-predictor's training conditions.</p>
-<hr />
-<h2 id="20-uncertainty-management">20. Uncertainty Management</h2>
+<hr/>
+<h2 id="20-uncertainty-management"><span class="num">20</span>Uncertainty Management</h2>
 <p>In addition to a prediction, PRECOG must systematically produce:</p>
 <ul>
 <li>a <strong>calibrated uncertainty</strong> (via predictor ensembles, quantile regression, or a Bayesian method),</li>
 <li>a distinction between <strong>model uncertainty</strong> (lack of knowledge), <strong>data uncertainty</strong> (intrinsic ambiguity of the problem), and <strong>training stochasticity</strong> (variance across seeds).</li>
 </ul>
 <p>Example output:</p>
-<pre><code class="language-text">Configuration A: prediction = 95%, confidence = 91%
+<pre class="diagram"><code class="language-text">Configuration A: prediction = 95%, confidence = 91%
 Configuration B: prediction = 94%, confidence = 52%
 </code></pre>
 <p>Uncertainty directly feeds the acquisition function (§9.8) and the decision policy (§9.11): an uncertain but potentially informative configuration can be tested with priority to reduce the system's overall uncertainty (active learning).</p>
-<hr />
-<h2 id="21-causation-vs-correlation">21. Causation vs. Correlation</h2>
+<hr/>
+<h2 id="21-causation-vs-correlation"><span class="num">21</span>Causation vs. Correlation</h2>
 <p>A correlation observed between a pre-training signal (e.g. gradient variance) and final performance can be confounded by a third variable (typically the architecture). PRECOG must therefore:</p>
 <ol>
 <li>Identify candidate relationships from the meta-dataset's correlations.</li>
@@ -1019,17 +1110,17 @@ Configuration B: prediction = 94%, confidence = 52%
 <li>Design controlled experiments where only the candidate variable changes (architecture, dataset, and optimizer fixed).</li>
 <li>Only promote a relationship to "knowledge exploitable in production" after causal validation, or otherwise explicitly mark it as "correlation not causally validated".</li>
 </ol>
-<hr />
-<h2 id="22-generalization-and-distribution-shift-detection">22. Generalization and Distribution-Shift Detection</h2>
+<hr/>
+<h2 id="22-generalization-and-distribution-shift-detection"><span class="num">22</span>Generalization and Distribution-Shift Detection</h2>
 <p>The generalization test (P6, §15) is considered <strong>the most scientifically important</strong>. It requires:</p>
 <ul>
 <li>training/validating the meta-predictor on a subset of architectures and datasets, then</li>
 <li>testing on architectures and datasets <strong>structurally absent</strong> from the training set (e.g. train on CNN/MLP/ResNet, test on Transformer).</li>
 </ul>
 <p>The OOD module (§9.13) must estimate $P(\text{known task})$ and automatically trigger an increase in the validation budget (PROBE mode) when a task is judged far from the meta-dataset, rather than producing an overconfident PURE prediction out of distribution.</p>
-<hr />
-<h2 id="23-methodological-risks-and-mitigations">23. Methodological Risks and Mitigations</h2>
-<table>
+<hr/>
+<h2 id="23-methodological-risks-and-mitigations"><span class="num">23</span>Methodological Risks and Mitigations</h2>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Risk</th>
@@ -1084,17 +1175,17 @@ Configuration B: prediction = 94%, confidence = 52%
 <td>Progressive curriculum (MLP → CNN → Transformer → unknown), strict generalization tests</td>
 </tr>
 </tbody>
-</table>
-<hr />
-<h2 id="24-system-economics">24. System Economics</h2>
+</table></div>
+<hr/>
+<h2 id="24-system-economics"><span class="num">24</span>System Economics</h2>
 <p>PRECOG only has practical value if:</p>
 <p>$$
 Cost_{PRECOG} + Cost_{PROBE\ if\ any} \; \ll \; Cost_{classic\ HPO\ or\ multiple\ FULL\ TRAININGs}
 $$</p>
 <p>This constraint must be measured at every evaluation, not merely assumed. A system that is theoretically accurate but whose inference is too costly (e.g. a meta-predictor that itself requires enormous compute) must be considered an economic failure, even with a good ranking score.</p>
-<hr />
-<h2 id="25-development-roadmap">25. Development Roadmap</h2>
-<pre><code class="language-text">V1 — Foundations
+<hr/>
+<h2 id="25-development-roadmap"><span class="num">25</span>Development Roadmap</h2>
+<pre class="diagram"><code class="language-text">V1 — Foundations
   Learning Rate, Batch Size, Optimizer, Initialization
   (basic zero-cost analysis, no meta-learning)
 
@@ -1115,22 +1206,22 @@ V6 — Science
   Scientific Discovery Engine
 </code></pre>
 <h3 id="scientific-progression-by-phase-indicative">Scientific progression by phase (indicative)</h3>
-<pre><code class="language-text">Phase A: analytical foundations (Zero-Cost, NEAR, Initialization)
+<pre class="diagram"><code class="language-text">Phase A: analytical foundations (Zero-Cost, NEAR, Initialization)
 Phase B: meta-learning + Bayesian Optimization
 Phase C: uncertainty + active learning + adaptive acquisition
 Phase D: learning-curve prediction + adaptive probe + failure analysis
 Phase E: validation — never-seen tasks, multi-seed, statistical tests, reproducibility
 </code></pre>
 <h3 id="experimental-curriculum">Experimental curriculum</h3>
-<pre><code class="language-text">Level 1: MLP on synthetic datasets
+<pre class="diagram"><code class="language-text">Level 1: MLP on synthetic datasets
 Level 2: CNN on vision
 Level 3: ResNet / modern architectures
 Level 4: Transformers
 Level 5: LLM fine-tuning
 Level 6: never-seen models and datasets (ultimate generalization test)
 </code></pre>
-<hr />
-<h2 id="26-success-criteria">26. Success Criteria</h2>
+<hr/>
+<h2 id="26-success-criteria"><span class="num">26</span>Success Criteria</h2>
 <p>A PRECOG milestone is only considered reached if, <strong>simultaneously</strong>, on a locked test set never used for training:</p>
 <ol>
 <li>the ranking (Spearman ρ) reaches the target threshold for the level considered,</li>
@@ -1141,8 +1232,8 @@ Level 6: never-seen models and datasets (ultimate generalization test)
 <li>results are reproducible (multi-seed, confidence intervals, documented environment).</li>
 </ol>
 <p>A system that reaches only part of these criteria (e.g. good ranking but poor generalization) is <strong>not</strong> considered to have reached the milestone.</p>
-<hr />
-<h2 id="27-known-limitations">27. Known Limitations</h2>
+<hr/>
+<h2 id="27-known-limitations"><span class="num">27</span>Known Limitations</h2>
 <ul>
 <li>Generalization to radically new architecture families (beyond those represented in the meta-dataset) is not guaranteed and must be treated as a hypothesis to test, not as a given.</li>
 <li>Current zero-cost signals from the literature are not universally reliable; combining them reduces but does not eliminate the risk.</li>
@@ -1150,15 +1241,15 @@ Level 6: never-seen models and datasets (ultimate generalization test)
 <li>PROBE mode introduces a real cost, even if minimal; any claimed gain must be net of this cost.</li>
 <li>The causation/correlation distinction remains partial: some exploited relationships will in practice remain robust correlations rather than demonstrated causes, and must be presented as such.</li>
 </ul>
-<hr />
-<h2 id="28-outlook">28. Outlook</h2>
+<hr/>
+<h2 id="28-outlook"><span class="num">28</span>Outlook</h2>
 <p>In the longer term, PRECOG's scientific ambition goes beyond HPO: the goal is to build an operational theory of <strong>predictable learning dynamics</strong>, i.e. a function</p>
 <p>$$
 F : (\text{Model}, \text{Data}, \text{Initialization}, \text{Hyperparameters}) \rightarrow \text{Training trajectory}
 $$</p>
 <p>able to anticipate the loss trajectory $L(t)$ before full training. If this direction succeeds, PRECOG would stop being just a hyperparameter optimizer and become a <strong>predictive model of learning dynamics</strong>, with potential for its own scientific contribution (beyond integrating existing tools).</p>
-<hr />
-<h2 id="29-production-architecture-long-term-target">29. Production Architecture (long-term target)</h2>
+<hr/>
+<h2 id="29-production-architecture-long-term-target"><span class="num">29</span>Production Architecture (long-term target)</h2>
 <p>PRECOG, as a platform, must be able to:</p>
 <ol>
 <li>Receive an untrained model, the dataset's allowed metadata/statistics, and a description of the hardware environment.</li>
@@ -1167,7 +1258,7 @@ $$</p>
 <li>On request, validate the best hypotheses via a minimal budget in <strong>PROBE</strong> mode.</li>
 <li>Systematically log the experiment (including production usage) into the meta-dataset, for continuous improvement.</li>
 </ol>
-<pre><code class="language-text">Untrained model + Dataset (stats) + Hardware
+<pre class="diagram"><code class="language-text">Untrained model + Dataset (stats) + Hardware
                     │
                     ▼
               PRECOG (PURE mode)
@@ -1183,8 +1274,8 @@ $$</p>
                     ▼
         Recommended configuration + justification
 </code></pre>
-<hr />
-<h2 id="30-synthesis-the-idea-that-distinguishes-precog-from-classic-hpo">30. Synthesis — the idea that distinguishes PRECOG from classic HPO</h2>
+<hr/>
+<h2 id="30-synthesis-the-idea-that-distinguishes-precog-from-classic-hpo"><span class="num">30</span>Synthesis — the idea that distinguishes PRECOG from classic HPO</h2>
 <blockquote>
 <p><strong>PRECOG does not simply search for the best hyperparameters after training many configurations; it seeks to learn the relationship between a model's initial state, the properties of the problem, and the learning conditions, in order to predict — before any training on real data — which configurations have the highest probability of leading to fast, efficient convergence.</strong></p>
 </blockquote>
@@ -1194,11 +1285,35 @@ $$</p>
 
   <footer>
     <p>
-      <a href="https://github.com/rustnew/precog-trainability">Repository</a> &middot;
-      <a href="https://github.com/rustnew/precog-trainability/blob/main/docs.md">docs.md (source)</a> &middot;
-      <a href="https://github.com/rustnew/precog-trainability/blob/main/CONTRIBUTING.md">Contributing</a> &middot;
+      <a href="https://github.com/rustnew/precog-trainability">Repository</a><span class="sep">&middot;</span>
+      <a href="https://github.com/rustnew/precog-trainability/blob/main/docs.md">docs.md (source)</a><span class="sep">&middot;</span>
+      <a href="https://github.com/rustnew/precog-trainability/blob/main/CONTRIBUTING.md">Contributing</a><span class="sep">&middot;</span>
       <a href="https://github.com/rustnew/precog-trainability/blob/main/LICENSE">MIT License</a>
     </p>
   </footer>
+
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc.desktop a'));
+      if (!links.length || !window.IntersectionObserver) return;
+      var map = {};
+      links.forEach(function (a) {
+        var id = a.getAttribute('href').slice(1);
+        var el = document.getElementById(id);
+        if (el) map[id] = a;
+      });
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          var link = map[entry.target.id];
+          if (!link) return;
+          if (entry.isIntersecting) {
+            links.forEach(function (a) { a.classList.remove('active'); });
+            link.classList.add('active');
+          }
+        });
+      }, { rootMargin: '0px 0px -75% 0px', threshold: 0 });
+      Object.keys(map).forEach(function (id) { observer.observe(document.getElementById(id)); });
+    })();
+  </script>
 </body>
 </html>
