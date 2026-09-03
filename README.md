@@ -7,6 +7,7 @@
 A research prototype testing whether "zero-cost" signals computed on an
 **untrained** network (before a single optimizer step) can predict which
 hyperparameters will actually train well. Full spec in [docs.md](docs.md).
+**[Project page →](https://rustnew.github.io/precog-trainability/)**
 
 This is a curated subset of a larger project. It exists to show three
 things honestly, in order: **a real positive finding, a headline number
@@ -16,7 +17,16 @@ meta-learning, the last two sections are where we'd like your help.
 
 ## TL;DR
 
-- Best method found: **`jacob_cov`** (NASWOT, Mellor et al. 2021), used
+- **What this saves in practice**: a check on the untrained network (one
+  forward/backward pass, milliseconds, no GPU) instead of a full training
+  run wasted on a bad initialization. Two real examples from our own test
+  set: one task where 2 of 3 init choices never converge at all within
+  budget and our pick is the one that does (627 steps); another where our
+  pick needs 61 steps against 208 for the worst choice (3.4x). Not a
+  "less data" claim — we tested that directly (active sample selection)
+  and it made things worse, see §5 below. Not universal either — right
+  47% of the time overall, these two are verified wins, not the average case.
+- Best method found: **`jacob_cov`** ([NASWOT](https://arxiv.org/abs/2006.04647), Mellor et al. 2021), used
   directly as a decision rule with **zero training, zero learned model** —
   beats 4 RandomForest variants, a Gaussian Process, KNN, and 3 different
   ways of combining proxies. 47% top-1 accuracy picking the best of 3
@@ -31,9 +41,12 @@ meta-learning, the last two sections are where we'd like your help.
 
 ## 1. What actually works
 
-`precog/trainability.py` implements 11 zero-cost proxies (SynFlow, SNIP,
-GraSP, Jacob-Cov/NASWOT, effective rank, Hessian trace, Jacobian
-conditioning, gradient statistics, ZiCo). `scripts/compare_meta_predictors.py`
+`precog/trainability.py` implements 11 zero-cost proxies ([SynFlow](https://arxiv.org/abs/2006.05467),
+[SNIP](https://arxiv.org/abs/1810.02340), [GraSP](https://arxiv.org/abs/2002.07376),
+Jacob-Cov/[NASWOT](https://arxiv.org/abs/2006.04647), [effective rank](https://arxiv.org/abs/2408.08776) (NEAR),
+Hessian trace, Jacobian conditioning, gradient statistics, [ZiCo](https://arxiv.org/abs/2301.11300)).
+Full citations for every method, including ones tested and not promoted: [source.md](source.md).
+`scripts/compare_meta_predictors.py`
 evaluates every method — RandomForest (full/reduced features, log-target),
 Gaussian Process, k-NN, raw proxy heuristics, learned/rank/naive proxy
 combinations — on one **locked** test split (60 tasks never touched during
@@ -50,7 +63,7 @@ all. Every attempt to do better with more sophistication failed:
 | Combination method | Ranking correlation (ρ) |
 |---|---:|
 | naive z-score average | 0.365 |
-| AZ-NAS-style rank aggregation (CVPR 2024) | 0.410 |
+| [AZ-NAS](https://arxiv.org/abs/2403.19232)-style rank aggregation (CVPR 2024) | 0.410 |
 | learned linear combination (Ridge, proper Leave-One-Task-Out CV) | 0.504 |
 | **best single proxy alone** | **0.540** |
 
@@ -141,6 +154,17 @@ concrete evidence it's partly memorizing per-family patterns, not learning
 a family-independent notion of trainability. The training-free `jacob_cov`
 heuristic degrades far more gently across every fold.
 [Report](results/reports/2026-09-01T22-25-08Z_explore_ood_generalization.md).
+
+## 5. What this doesn't save: data
+
+We tested whether choosing *which* training samples to use (hard-example
+mining: preferentially train on the highest-loss samples instead of random
+batches) could reduce the number of samples needed to converge — a
+different, complementary efficiency axis from everything above. Tested on
+the same 12 controlled tasks used throughout this project: it lost on
+**12/12**, often drastically (mean samples-to-threshold +267.6% worse than
+random batching). Kept and reported like every other negative result here.
+[Report](results/reports/2026-09-01T14-37-08Z_explore_active_learning.md).
 
 ## Reproduce it
 

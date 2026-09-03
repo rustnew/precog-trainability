@@ -39,7 +39,10 @@ PRECOG's philosophy leans heavily on one idea: *past experience must become reus
 
 Likely the branch closest to PRECOG's original idea: predicting a network's performance without fully training it.
 
-- **Zero-Cost Proxies for Lightweight NAS** (Abdelfattah, Mehrotra, Dudziak, Lane, ICLR 2021, arXiv:2101.08134) — *very important, directly actionable*. Introduces scores computed from a single minibatch (SynFlow, SNIP, GraSP, Jacob-Cov, grad-norm, Fisher) that rank architectures without any training. Their best proxy reaches a Spearman correlation of **0.82** with final accuracy on NAS-Bench-201 (vs. 0.61 for EcoNAS, a reduced-training method), matching EcoNAS's accuracy **4x faster** on NAS-Bench-101. This is the direct basis for `precog/trainability.py`'s SynFlow/SNIP/GraSP implementations.
+- **Zero-Cost Proxies for Lightweight NAS** (Abdelfattah, Mehrotra, Dudziak, Lane, ICLR 2021, [arXiv:2101.08134](https://arxiv.org/abs/2101.08134)) — *very important, directly actionable*. Surveys and benchmarks scores computed from a single minibatch (SynFlow, SNIP, GraSP, Jacob-Cov, grad-norm, Fisher) that rank architectures without any training. Their best proxy reaches a Spearman correlation of **0.82** with final accuracy on NAS-Bench-201 (vs. 0.61 for EcoNAS, a reduced-training method), matching EcoNAS's accuracy **4x faster** on NAS-Bench-101. The original papers behind each proxy this survey benchmarks, and that `precog/trainability.py` directly implements:
+  - **SynFlow** — Tanaka, Kunin, Yamins, Ganguli, NeurIPS 2020, [arXiv:2006.05467](https://arxiv.org/abs/2006.05467).
+  - **SNIP** — Lee, Ajanthan, Torr, ICLR 2019, [arXiv:1810.02340](https://arxiv.org/abs/1810.02340).
+  - **GraSP** — Wang, Zhang, Grosse, ICLR 2020, [arXiv:2002.07376](https://arxiv.org/abs/2002.07376).
 - **Zero-Shot Neural Architecture Search** — a comprehensive survey of methods for predicting architecture quality without training parameters; a scientific map of training-free proxies.
 - **NEAR: A Training-Free Pre-Estimator of Machine Learning Model Performance** — one of the most interesting papers for PRECOG. Proposes a score based on the effective rank of activations to estimate a network's future performance, also demonstrated for selecting initialization and activation functions (`docs.md` §9.4 "NEAR").
 - **ProxyBO** — combines zero-cost proxies with Bayesian Optimization to accelerate architecture search. Close to the idea of using analytical signals before investing in costly training.
@@ -53,12 +56,14 @@ Why do some initializations enable much faster convergence?
 - **Resurrecting the Sigmoid in Deep Learning Through Dynamical Isometry** (Pennington, Schoenholz, Ganguli) — studies signal propagation and shows that certain initialization conditions enable better gradient flow and much faster learning in some regimes. The theoretical basis of dynamical isometry (`docs.md` §6, §11.2).
 - **On the Neural Tangent Kernel of Deep Networks with Orthogonal Initialization** — analyzes the link between orthogonality, the NTK, and learning speed. Useful if PRECOG wants to exploit geometric properties before training.
 - **Dynamical Isometry and a Mean Field Theory of RNNs** — develops a theory of signal propagation at initialization using random matrix theory and mean-field methods. Important for understanding how to analyze an untrained network.
+- **All You Need Is a Good Init** (Mishkin & Matas, ICLR 2016, [arXiv:1511.06422](https://arxiv.org/abs/1511.06422)) — LSUV: layer-sequential unit-variance initialization, calibrating each layer's output variance to 1 on a real batch of data rather than an assumed input distribution. Implemented in `precog/model.py`'s `_apply_lsuv()`; tested as a 4th init candidate against Xavier/He/Orthogonal and found to underperform on this project's synthetic task family (`scripts/explore_lsuv_init.py`, [report](results/reports/2026-09-01T14-29-10Z_explore_lsuv_init.md)).
 
 ## 5. Training Dynamics and Learning Geometry
 
 PRECOG wants to measure what happens in the first steps of learning to predict what follows. Associated fields: Gradient Flow, Loss Landscape, Hessian Spectrum, Jacobian Analysis, Sharpness, Curvature, Gradient Noise, Gradient Alignment.
 
 - **Deep Network Trainability via Persistent Subspace Orthogonality** — recent work deepening the notion of dynamical isometry and the relationship between persistent orthogonality and trainability. Shows that a network's internal geometry remains an active research topic.
+- **ZiCo: Zero-shot NAS via Inverse Coefficient of Variation on Gradients** (Li et al., 2023, [arXiv:2301.11300](https://arxiv.org/abs/2301.11300)) — per-parameter mean(\|gradient\|)/std(gradient) across mini-batches at fixed weights; high mean, low variance predicts fast, stable convergence. Implemented in `precog/trainability.py`'s `zico()`; tested in the controlled Gate 1 ranking experiment (rho=0.328 at full meta-dataset scale, not promoted into the validated proxy set).
 
 ## 6. Sample Efficiency
 
@@ -71,7 +76,9 @@ The goal isn't only reducing epochs — it's also reducing $N_\epsilon$, the amo
 
 Even though PRECOG doesn't primarily search for the best architecture, this literature supplies the methods for predicting an untrained network's quality.
 
-- **NASWOT and Zero-Cost Proxies** — introduces scores computed at initialization to rank architectures without full training. A direct methodological inspiration for PRECOG.
+- **Neural Architecture Search without Training** (Mellor, Turner, Storkey, Crowley, ICML 2021, [arXiv:2006.04647](https://arxiv.org/abs/2006.04647)) — NASWOT: scores a network by the diversity of binary activation patterns its untrained forward pass produces across a batch, no training required. Direct basis for `precog/trainability.py`'s `jacob_cov()` — the single best-evidenced method in this project (see README).
+- **NEAR: A Training-Free Pre-Estimator of Machine Learning Model Performance** (Husistein, Reiher, Eckhoff, ICLR 2025, [arXiv:2408.08776](https://arxiv.org/abs/2408.08776)) — estimates expressivity via the effective rank of pre/post-activation matrices; also usable for selecting initialization and activation functions (`docs.md` §9.4 "NEAR"). Basis for `precog/trainability.py`'s `effective_rank()`.
+- **AZ-NAS: Assembling Zero-Cost Proxies for Network Architecture Search** (Lee et al., CVPR 2024, [arXiv:2403.19232](https://arxiv.org/abs/2403.19232)) — combines multiple zero-cost proxies via rank aggregation (sum of per-proxy ranks) rather than raw z-score averaging. Tested as an alternative combination strategy for Gate 1's ranking correlation; a modest improvement over naive averaging, still well below the best single proxy alone (see `scripts/gate1_ranking.py`).
 - **Generic Neural Architecture Search via Regression** — explores predicting architecture performance via regression, using network representations rather than full training runs.
 - **RBFleX-NAS** — recent work on training-free approaches for selecting architectures at minimal cost.
 

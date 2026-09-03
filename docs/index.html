@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRECOG — Can Pre-Training Signals Predict Trainability?</title>
+<meta name="description" content="A research prototype testing whether zero-cost signals computed on an untrained network can predict trainability. A real finding, a headline number we walked back, and a mathematical bug we couldn't fix.">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #111111;
+    --muted: #6b6b6b;
+    --accent: #1a56db;
+    --line: #e7e7e7;
+    --card: #fafafa;
+    --code-bg: #111111;
+    --code-ink: #f2f2f2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  header.hero {
+    border-bottom: 1px solid var(--line);
+    padding: 64px 0 40px;
+  }
+  header.hero .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+  h1 { font-size: 2.1rem; margin: 0 0 14px; line-height: 1.2; }
+  .tagline { font-size: 1.15rem; color: var(--muted); margin: 0 0 24px; max-width: 60ch; }
+  .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .badges img { display: block; }
+  .cta { margin-top: 22px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 3px;
+    text-decoration: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+    border: 1px solid var(--ink);
+  }
+  .btn.primary { background: var(--ink); color: var(--bg); }
+  .btn.secondary { color: var(--ink); }
+
+  section { padding: 40px 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-size: 1.1rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin: 0 0 20px;
+  }
+  h2 .num { color: var(--muted); margin-right: 8px; }
+
+  .tldr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0; }
+  .tldr .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px;
+  }
+  .tldr .num { font-size: 1.6rem; font-weight: 700; display: block; margin-bottom: 6px; }
+  .tldr .label { font-size: 0.85rem; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.8rem; text-transform: uppercase; color: var(--muted); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.win td { font-weight: 700; }
+
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #efeadb; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 16px 18px;
+    border-radius: 5px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+
+  .finding-link { display: inline-block; margin-top: 4px; font-size: 0.9rem; }
+  blockquote {
+    margin: 20px 0;
+    padding: 4px 20px;
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+    font-style: italic;
+  }
+  footer { padding: 40px 0 80px; color: var(--muted); font-size: 0.9rem; }
+  footer a { color: var(--ink); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <p class="eyebrow">Research snapshot &middot; v0.1.0</p>
+      <h1>PRECOG</h1>
+      <p class="tagline">Can signals computed on an <strong>untrained</strong> network — before a single optimizer step — predict which hyperparameters will actually train well?</p>
+      <div class="badges">
+        <img src="https://github.com/rustnew/precog-trainability/actions/workflows/reproduce.yml/badge.svg" alt="Reproduce CI status">
+        <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+        <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+">
+      </div>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/rustnew/precog-trainability">View the repository</a>
+        <a class="btn secondary" href="https://github.com/rustnew/precog-trainability/blob/main/docs.md">Read the full spec</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>TL;DR</h2>
+      <div class="tldr">
+        <div class="card">
+          <span class="num">47%</span>
+          <span class="label">top-1 accuracy picking the best init, with zero training and zero learned model — beats every fancier method tried</span>
+        </div>
+        <div class="card">
+          <span class="num">0.670 → 0.395</span>
+          <span class="label">our own headline correlation, corrected in public after rechecking at 26&times; the sample size</span>
+        </div>
+        <div class="card">
+          <span class="num">0.0</span>
+          <span class="label">the exact, provable difference our best proxy sees between two of its three candidate choices — a math bug, not a data problem</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="num">01</span>Why this matters</h2>
+      <p>
+        The practical bet is: check a network before you train it — in
+        milliseconds, on CPU, no GPU-hours spent — and skip the initialization
+        choice that would have wasted your training run. Two real examples,
+        pulled directly from our own locked test set, not cherry-picked for
+        effect beyond "these are honestly the clearest to read":
+      </p>
+      <table>
+        <thead><tr><th>Task</th><th class="num">He</th><th class="num">Orthogonal</th><th class="num">Xavier</th><th>Our pick</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>nonlinear_product, dim=7</td>
+            <td class="num">1600 (never converges)</td>
+            <td class="num">1600 (never converges)</td>
+            <td class="num">627 steps</td>
+            <td>Xavier — correct, and the only one that finishes at all</td>
+          </tr>
+          <tr>
+            <td>nonlinear_product, dim=4</td>
+            <td class="num">208 steps</td>
+            <td class="num">140 steps</td>
+            <td class="num">61 steps</td>
+            <td>Xavier — correct, 3.4&times; fewer steps than the worst choice</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Both calls above came from a single forward/backward pass on the
+        untrained network — no training run spent finding out.
+      </p>
+      <p>
+        <strong>What this is not:</strong> a claim about needing <em>less
+        data</em>. We tested that directly — actively selecting which
+        training samples to use instead of random batches — and it made
+        things worse, not better (0/12 tasks improved). The demonstrated
+        gain here is narrower and more honest: skip a training run wasted on
+        a bad initialization, decided for free before training starts. It
+        also isn't universal — the pick above is only right 47% of the time
+        across the full test set (see below); these two are real, verified
+        wins, not the typical case.
+        <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-01T14-37-08Z_explore_active_learning.md">Why the "less data" attempt failed →</a>
+      </p>
+    </section>
+
+    <section>
+      <h2><span class="num">02</span>What actually works</h2>
+      <p>
+        Ranking three init candidates (Xavier / He / Orthogonal) by their raw
+        <code>jacob_cov</code> (<a href="https://arxiv.org/abs/2006.04647">NASWOT</a>) score — no training, no learned model —
+        beats four RandomForest variants, a Gaussian Process, k-NN, and three
+        different ways of combining proxies, measured on a <strong>locked</strong>
+        60-task test split never touched during development.
+      </p>
+      <table>
+        <thead><tr><th>Combination method</th><th class="num">Ranking correlation (&rho;)</th></tr></thead>
+        <tbody>
+          <tr><td>naive z-score average</td><td class="num">0.365</td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2403.19232">AZ-NAS</a>-style rank aggregation (CVPR 2024)</td><td class="num">0.410</td></tr>
+          <tr><td>learned linear combination (Ridge, Leave-One-Task-Out CV)</td><td class="num">0.504</td></tr>
+          <tr class="win"><td>best single proxy alone</td><td class="num">0.540</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The learned combination reaches &rho;=0.845 <em>in-sample</em> (no held-out
+        task) — a clean illustration of overfitting with 11 features on a dozen
+        tasks, and exactly why every result here uses task-grouped, not row-level,
+        cross-validation.
+      </p>
+      <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-02T07-09-16Z_explore_learned_combination.md">Full write-up →</a>
+    </section>
+
+    <section>
+      <h2><span class="num">03</span>The number we got wrong, in public</h2>
+      <p>
+        Our first controlled experiment (n=36: 12 tasks &times; 3 init methods)
+        found <code>gradient_norm_variance</code> correlating with real convergence
+        speed at &rho;=+0.670. We used that number in downstream decisions.
+      </p>
+      <blockquote>It didn't hold. Rechecked at n=936 (312 tasks, identical design, zero new training runs — the data already existed): &rho;=0.395. The corrected best individual proxy is <code>gradient_norm</code> (&rho;=0.540).</blockquote>
+      <p>
+        We saw the same shrinkage independently for learning-rate prediction:
+        &rho;=&minus;0.726 at n=12 dropped to &rho;=&minus;0.343 at n=40. We don't
+        think this is unusual for the field — we just don't see it checked often.
+      </p>
+      <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-02T07-10-47Z_gate1_ranking_at_scale.md">Full correction →</a>
+    </section>
+
+    <section>
+      <h2><span class="num">04</span>A bug we found but can't fix</h2>
+      <p>
+        <code>jacob_cov</code> never once recommends "He init" across 60 test
+        tasks — including the 10 where it's genuinely fastest. The cause is
+        structural: Xavier and He (zero-biased networks) draw from the same
+        underlying Gaussian values, differing only by a positive scale — and
+        <code>jacob_cov</code> only reads activation <em>sign</em>, which scaling
+        cannot flip.
+      </p>
+      <pre><code>jacob_cov(He-init network)  ==  jacob_cov(Xavier-init network)</code></pre>
+      <p>
+        exactly, for the same seed — checked across all 312 tasks, max difference
+        is <code>0.0</code>. Two other proxies (<code>effective_rank</code>,
+        <code>jacobian_condition_mean</code>) share the property for the same
+        reason. Two attempted fixes (raw and population-normalized tie-breaking
+        with <code>gradient_norm</code>) both failed.
+      </p>
+      <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-02T08-04-49Z_explore_scale_invariance_blindspot.md">Full audit of all 11 proxies →</a>
+    </section>
+
+    <section>
+      <h2><span class="num">05</span>Reproduce it</h2>
+      <pre><code>pip install -r requirements.txt
+python scripts/gate1_ranking.py              # the original (overestimated) result
+python scripts/gate1_ranking_at_scale.py     # the correction, no retraining needed
+python scripts/explore_scale_invariance_blindspot.py
+python scripts/compare_meta_predictors.py    # full method comparison + regret</code></pre>
+      <p>
+        <code>data/meta_dataset.db</code> ships with the repo (312 tasks, 936
+        controlled experiments) so every scale-corrected result reproduces
+        without rerunning any training. CI reruns all of the above on every push.
+      </p>
+    </section>
+
+    <section>
+      <h2><span class="num">06</span>References</h2>
+      <p>
+        Every method named above, linked to the actual paper — not a survey
+        mention, the source:
+      </p>
+      <table>
+        <thead><tr><th>Method</th><th>Paper</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td>NASWOT / <code>jacob_cov</code></td><td><a href="https://arxiv.org/abs/2006.04647">Mellor et al., 2021</a></td><td>the best-evidenced method (§2)</td></tr>
+          <tr><td>SynFlow</td><td><a href="https://arxiv.org/abs/2006.05467">Tanaka et al., 2020</a></td><td>zero-cost proxy, weak on this benchmark</td></tr>
+          <tr><td>SNIP</td><td><a href="https://arxiv.org/abs/1810.02340">Lee et al., 2019</a></td><td>zero-cost proxy</td></tr>
+          <tr><td>GraSP</td><td><a href="https://arxiv.org/abs/2002.07376">Wang et al., 2020</a></td><td>zero-cost proxy</td></tr>
+          <tr><td>NEAR / effective rank</td><td><a href="https://arxiv.org/abs/2408.08776">Husistein et al., 2025</a></td><td>expressivity proxy</td></tr>
+          <tr><td>ZiCo</td><td><a href="https://arxiv.org/abs/2301.11300">Li et al., 2023</a></td><td><a href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-01T22-12-09Z_gate1_ranking.md">tested, rho=0.328, not promoted</a></td></tr>
+          <tr><td>AZ-NAS (rank aggregation)</td><td><a href="https://arxiv.org/abs/2403.19232">Lee et al., CVPR 2024</a></td><td>combination method, §2 above</td></tr>
+          <tr><td>LSUV</td><td><a href="https://arxiv.org/abs/1511.06422">Mishkin &amp; Matas, 2015</a></td><td>data-aware init, <a href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-01T14-29-10Z_explore_lsuv_init.md">tested, underperformed</a></td></tr>
+          <tr><td>Zero-Cost Proxies survey</td><td><a href="https://arxiv.org/abs/2101.08134">Abdelfattah et al., ICLR 2021</a></td><td>basis for the proxy set in <code>precog/trainability.py</code></td></tr>
+        </tbody>
+      </table>
+      <p>
+        Full bibliography, including hyperparameter optimization, meta-learning,
+        dynamical isometry, and active-learning literature not directly
+        implemented yet:
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/source.md">source.md</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2><span class="num">07</span>In the same spirit</h2>
+      <p>
+        We're not affiliated with it, but
+        <a href="https://github.com/karpathy/autoresearch">karpathy/autoresearch</a>
+        is the closest thing we've seen to the same underlying instinct: fix a
+        tight, cheap experimental loop (there, a 5-minute training budget and one
+        metric; here, controlled synthetic tasks and a locked test split), then
+        let the loop run fast enough, and honestly enough, that what survives
+        it is worth trusting. Different problem — that project is about an
+        autonomous agent iterating on training code overnight, this one is
+        about predicting hyperparameters before training starts — but the same
+        bet: rigor and speed aren't in tension if the loop is small enough to
+        run a lot, and log every result, wins and failures alike, without
+        editorializing.
+      </p>
+    </section>
+
+    <footer>
+      <p>
+        Not a finished system — no success criterion in the full spec is met yet.
+        This is an honest, ongoing research snapshot, not a solved problem.
+      </p>
+      <p>
+        <a href="https://github.com/rustnew/precog-trainability">Repository</a> ·
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/CONTRIBUTING.md">Contributing</a> ·
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/CITATION.cff">Citation</a> ·
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/LICENSE">MIT License</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
