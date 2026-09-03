@@ -52,6 +52,7 @@ from sklearn.preprocessing import StandardScaler
 
 from precog.meta_knowledge_base import MetaKnowledgeBase
 from precog.model import InitMethod
+from precog.modes import Mode, TrainingConfig, TrainProtocol, train
 from precog.regime import _bucket_noise, _bucket_volume
 from precog.trainability import zero_cost_features
 
@@ -151,6 +152,7 @@ class Recommendation:
     steps_range: tuple[float, float]  # +/- 1 std across the ensemble
     confidence: float  # 1 - (relative spread), clamped to [0, 1]
     per_candidate: dict[str, dict]  # every candidate's own prediction, for transparency
+    probe_cost_steps: int = 0  # PROBE-mode budget actually spent on this decision (docs.md §5 cost-accounting)
 
 
 class MetaPredictor:
@@ -430,6 +432,91 @@ class TieBreakHeuristicPredictor:
             steps_range=(float("nan"), float("nan")),
             confidence=float("nan"),  # this method makes no probabilistic claim -- see docs.md §20
             per_candidate=per_candidate,
+        )
+
+
+class ProbeTieBreakPredictor:
+    """Third fix attempt for zc_jacobcov's proven blind spot (see
+    TieBreakHeuristicPredictor above): jacob_cov's binary activation-sign
+    statistic is *exactly* invariant to the positive rescaling that
+    separates Xavier from He (max |xavier-he| jacob_cov = 0.0 across all
+    312 meta-dataset tasks), so no PURE-mode secondary proxy -- raw or
+    population-normalized gradient_norm, both tried in
+    scripts/compare_meta_predictors.py -- can ever break that exact tie;
+    gradient_norm turned out to carry the same he>xavier scale confound
+    jacob_cov's sign-only statistic doesn't even look at.
+
+    This tries the other option named in
+    results/reports/2026-09-02T08-04-49Z_explore_scale_invariance_blindspot.md:
+    a minimal PROBE-mode check (docs.md §5: DeltaW != 0, but bounded and
+    logged, 50-1000 steps by contract) spent *only* on the exact tie
+    jacob_cov cannot see -- train each tied candidate for `probe_steps`
+    real steps at its own (learning_rate, batch_size, optimizer) and keep
+    whichever ends with the lower loss. `last_probe_cost_steps` records
+    the budget actually spent on the most recent call, so callers can
+    report it per the Zero-Training Contract's own requirement ("must
+    always be possible to answer how much PROBE adds over PURE alone, for
+    what additional cost") -- see scripts/explore_probe_tiebreak.py."""
+
+    def __init__(
+        self,
+        primary_proxy: str = "jacob_cov",
+        primary_higher_is_better: bool = False,
+        tie_tolerance: float = 1e-6,
+        probe_steps: int = 50,
+    ):
+        self.primary_proxy = primary_proxy
+        self.primary_higher_is_better = primary_higher_is_better
+        self.tie_tolerance = tie_tolerance
+        self.probe_steps = probe_steps
+        self.last_probe_cost_steps = 0
+
+    def recommend(
+        self,
+        features_row: pd.DataFrame,
+        zero_cost_by_candidate: dict[InitMethod, dict],
+        architecture=None,
+        x: torch.Tensor | None = None,
+        y: torch.Tensor | None = None,
+        training_by_candidate: dict[InitMethod, TrainingConfig] | None = None,
+    ) -> Recommendation:
+        per_candidate = {
+            c.value: {"expected_steps": float("nan"), "std_steps": 0.0, "primary_score": zc[self.primary_proxy]}
+            for c, zc in zero_cost_by_candidate.items()
+        }
+        primary_sign = -1 if self.primary_higher_is_better else 1
+        primary_values = {k: v["primary_score"] * primary_sign for k, v in per_candidate.items()}
+        best_primary = min(primary_values.values())
+        tied = [k for k, v in primary_values.items() if abs(v - best_primary) <= self.tie_tolerance]
+
+        self.last_probe_cost_steps = 0
+        if len(tied) == 1:
+            best_init_name = tied[0]
+        else:
+            if architecture is None or x is None or y is None or training_by_candidate is None:
+                raise ValueError(
+                    "ProbeTieBreakPredictor needs a live architecture/x/y/training_by_candidate "
+                    "context to actually run the PROBE that breaks the tie -- pass them through, "
+                    "see scripts/explore_probe_tiebreak.py for how the harness wires this up."
+                )
+            probe_losses = {}
+            for k in tied:
+                training = training_by_candidate[InitMethod(k)]
+                protocol = TrainProtocol(
+                    mode=Mode.PROBE, max_steps=self.probe_steps, loss_threshold=-1.0, seed=0
+                )
+                result = train(architecture, x, y, training, protocol)
+                probe_losses[k] = result.final_loss
+                self.last_probe_cost_steps += self.probe_steps
+            best_init_name = min(probe_losses, key=probe_losses.get)
+
+        return Recommendation(
+            recommended_init=InitMethod(best_init_name),
+            expected_steps=float("nan"),
+            steps_range=(float("nan"), float("nan")),
+            confidence=float("nan"),  # this method makes no probabilistic claim -- see docs.md §20
+            per_candidate=per_candidate,
+            probe_cost_steps=self.last_probe_cost_steps,
         )
 
 

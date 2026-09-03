@@ -246,10 +246,19 @@
         exactly, for the same seed — checked across all 312 tasks, max difference
         is <code>0.0</code>. Two other proxies (<code>effective_rank</code>,
         <code>jacobian_condition_mean</code>) share the property for the same
-        reason. Two attempted fixes (raw and population-normalized tie-breaking
-        with <code>gradient_norm</code>) both failed.
+        reason. Three attempted fixes, all failed: raw and population-normalized
+        tie-breaking with <code>gradient_norm</code> (same structural blindness,
+        different proxy), and — the one thing that should have worked, since
+        it stops reading a PURE-mode proxy entirely — a bounded 50-step
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/docs.md">PROBE-mode</a>
+        run on just the tied candidates. It does recover some "he" picks
+        (recall 0%→30% on the 10 tasks where "he" is truly best), but net
+        <em>regret gets worse</em> (+14.6→+45.4 steps): 50 real training steps
+        is enough to make "he" look locally better, not enough to see that it
+        sometimes never converges at all within budget.
       </p>
       <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-02T08-04-49Z_explore_scale_invariance_blindspot.md">Full audit of all 11 proxies →</a>
+      <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-03T12-59-38Z_explore_probe_tiebreak.md">Why the PROBE-mode fix doesn't net out →</a>
     </section>
 
     <section>
