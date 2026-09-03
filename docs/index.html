@@ -19,6 +19,27 @@
   window.MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  // Node coloring for special states (reject/confirm/next) is defined
+  // per-diagram in docs.md itself via classDef, so it also renders
+  // correctly when docs.md is viewed directly on GitHub. Only the shared
+  // base palette (default node look, links, fonts) lives here.
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "base",
+    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+    themeVariables: {
+      primaryColor: "#eef2ff",
+      primaryBorderColor: "#1a56db",
+      primaryTextColor: "#14161a",
+      lineColor: "#9a9fa6",
+      secondaryColor: "#f7f7f5",
+      tertiaryColor: "#ffffff",
+      fontSize: "14px",
+    },
+  });
+</script>
 <style>
   :root {
     --bg: #ffffff;
@@ -168,6 +189,13 @@
   }
   pre code { background: none; border: none; padding: 0; color: inherit; font-size: 1em; }
   pre.diagram { font-size: 0.74rem; }
+  pre.mermaid {
+    background: var(--bg-soft); color: var(--ink);
+    border: 1px solid var(--line); padding: 20px;
+    display: flex; justify-content: center;
+    overflow-x: auto;
+  }
+  pre.mermaid svg { max-width: 100%; }
 
   blockquote {
     margin: 22px 0; padding: 14px 20px; border-left: 3px solid var(--accent);
@@ -530,74 +558,48 @@ $$</p>
 </ol>
 <hr/>
 <h2 id="8-full-architecture"><span class="num">8</span>Full Architecture</h2>
-<pre class="diagram"><code class="language-text">                         PRECOG
-                            │
-            ┌───────────────┼────────────────┐
-            ▼               ▼                ▼
-       MODEL ENCODER   DATA ENCODER    HARDWARE ENCODER
-            │               │                │
-            └───────────────┼────────────────┘
-                            ▼
-                     TASK REPRESENTATION
-                            │
-                            ▼
-                    TRAINABILITY ENGINE
-                            │
-            ┌───────────────┼───────────────┐
-            ▼               ▼               ▼
-       Zero-Cost          NEAR          Initialization /
-       Proxies                          Gradient / Jacobian
-            │               │               │
-            └───────────────┼───────────────┘
-                            ▼
-                      REGIME DETECTOR
-                            │
-                            ▼
-                    META-KNOWLEDGE BASE
-                     (meta-dataset + task
-                        embeddings)
-                            │
-                            ▼
-                       META-PREDICTOR
-                     (multi-head ensemble)
-                      /              \
-              Prediction         Uncertainty
-                (distribution)    (calibrated)
-                      \              /
-                            ▼
-                  HYPERPARAMETER DISTRIBUTION
-                            │
-              ┌─────────────┴─────────────┐
-              ▼                           ▼
-        Pareto Search                Search Engine
-       (multi-objective)          (BO / Active Learning /
-                                    Diversity)
-              └─────────────┬─────────────┘
-                            ▼
-                    ADAPTIVE SHORT-PROBE
-                     (PROBE mode, optional)
-                            │
-                    ┌───────┴────────┐
-                    ▼                ▼
-                REJECT            CONFIRM
-                    │                │
-                    ▼                ▼
-              (loop back)     FULL TRAINING
-                                     │
-                                     ▼
-                               GROUND TRUTH
-                                     │
-                     ┌───────────────┴───────────────┐
-                     ▼                                ▼
-              META-DATASET UPDATE               FAILURE ANALYSIS
-                     │                                │
-                     └───────────────┬────────────────┘
-                                     ▼
-                       SCIENTIFIC DISCOVERY ENGINE
-                                     │
-                                     ▼
-                              PRECOG v(n+1)
-</code></pre>
+<pre class="mermaid">flowchart TD
+    P[PRECOG] --&gt; ME[Model Encoder]
+    P --&gt; DE[Data Encoder]
+    P --&gt; HE[Hardware Encoder]
+    ME --&gt; TR[Task Representation]
+    DE --&gt; TR
+    HE --&gt; TR
+    TR --&gt; TE[Trainability Engine]
+    TE --&gt; ZC["Zero-Cost Proxies"]
+    TE --&gt; NEAR["NEAR"]
+    TE --&gt; INIT["Initialization / Gradient / Jacobian"]
+    ZC --&gt; RD[Regime Detector]
+    NEAR --&gt; RD
+    INIT --&gt; RD
+    RD --&gt; MKB["Meta-Knowledge Base&lt;br/&gt;(meta-dataset + task embeddings)"]
+    MKB --&gt; MP["Meta-Predictor&lt;br/&gt;(multi-head ensemble)"]
+    MP --&gt; PRED["Prediction&lt;br/&gt;(distribution)"]
+    MP --&gt; UNC["Uncertainty&lt;br/&gt;(calibrated)"]
+    PRED --&gt; HD[Hyperparameter Distribution]
+    UNC --&gt; HD
+    HD --&gt; PS["Pareto Search&lt;br/&gt;(multi-objective)"]
+    HD --&gt; SE["Search Engine&lt;br/&gt;(BO / Active Learning / Diversity)"]
+    PS --&gt; ASP["Adaptive Short-Probe&lt;br/&gt;(PROBE mode, optional)"]
+    SE --&gt; ASP
+    ASP --&gt; REJ[Reject]
+    ASP --&gt; CONF[Confirm]
+    REJ -. loop back .-&gt; TE
+    CONF --&gt; FT[Full Training]
+    FT --&gt; GT[Ground Truth]
+    GT --&gt; MDU[Meta-Dataset Update]
+    GT --&gt; FA[Failure Analysis]
+    MDU --&gt; SDE[Scientific Discovery Engine]
+    FA --&gt; SDE
+    SDE --&gt; NEXT["PRECOG v(n+1)"]
+
+    classDef reject fill:#fdecec,stroke:#c8483a,color:#7a2b21;
+    classDef confirm fill:#e9f7ef,stroke:#1f9d55,color:#155c33;
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class REJ reject;
+    class CONF,GT,FT confirm;
+    class NEXT next;
+</pre>
 <hr/>
 <h2 id="9-detailed-components"><span class="num">9</span>Detailed Components</h2>
 <h3 id="91-model-encoder"><span class="num sub">9.1</span>Model Encoder</h3>
@@ -617,8 +619,10 @@ $$</p>
 <p>Combination rule: $Score_{ZC} = f(S_1, S_2, ..., S_n)$, never a single isolated score.</p>
 <h3 id="95-regime-detector"><span class="num sub">9.5</span>Regime Detector</h3>
 <p>Classifies the (model, dataset, hardware) tuple into a learning regime (e.g. small model/clean data, large model/noisy data, low data volume, long sequences). Produces a <strong>regime prior</strong> used to constrain the predicted hyperparameter distribution.</p>
-<pre class="diagram"><code class="language-text">(Model, Dataset, Hardware) → Regime → Hyperparameter Prior
-</code></pre>
+<pre class="mermaid">flowchart LR
+    A["Model, Dataset, Hardware"] --&gt; B[Regime]
+    B --&gt; C[Hyperparameter Prior]
+</pre>
 <h3 id="96-meta-knowledge-base"><span class="num sub">9.6</span>Meta-Knowledge Base</h3>
 <p>A structured base of all past experiments (see §12), with a <strong>task embedding</strong> mechanism enabling retrieval of the historical experiments closest to a new task, and using that neighborhood as a search prior (experience transfer).</p>
 <h3 id="97-meta-predictor"><span class="num sub">9.7</span>Meta-Predictor</h3>
@@ -648,23 +652,32 @@ $$</p>
 <p>Google Vizier / Optuna / BOHB play the role here of <strong>exploration arms</strong>, not the system's brain.</p>
 <h3 id="99-pareto-search-multi-objective-optimization"><span class="num sub">9.9</span>Pareto Search (multi-objective optimization)</h3>
 <p>Rather than seeking a single optimum, PRECOG searches for a <strong>Pareto front</strong> over (performance, compute, data, time, memory, energy):</p>
-<pre class="diagram"><code class="language-text">                  Performance
-                       ▲
-                  A ●
-                    \
-                 B ● \
-                       ● C
-                          \
-                           ● D
-                       └──────────────► Cost
-</code></pre>
+<pre class="mermaid">quadrantChart
+    title Pareto front: performance vs. cost
+    x-axis Low Cost --&gt; High Cost
+    y-axis Low Performance --&gt; High Performance
+    quadrant-1 Best trade-offs
+    quadrant-2 High cost, high performance
+    quadrant-3 Low cost, low performance
+    quadrant-4 Wasteful
+    A: [0.2, 0.55]
+    B: [0.35, 0.68]
+    C: [0.58, 0.8]
+    D: [0.78, 0.9]
+</pre>
 <p>PRECOG can then return several Pareto-optimal configurations, leaving it to the user (human or system) to choose according to their constraints.</p>
 <h3 id="910-adaptive-short-probe-probe-mode"><span class="num sub">9.10</span>Adaptive Short-Probe (PROBE mode)</h3>
 <p>A short training budget allocated <strong>dynamically</strong> based on uncertainty and intermediate performance:</p>
-<pre class="diagram"><code class="language-text">Candidate A → 50 steps → very poor    → STOP
-Candidate B → 50 steps → promising    → 200 steps
-Candidate C → 50 steps → excellent    → 1000 steps
-</code></pre>
+<pre class="mermaid">flowchart LR
+    A["Candidate A · 50 steps"] --&gt;|very poor| S1[STOP]
+    B["Candidate B · 50 steps"] --&gt;|promising| S2["+200 steps"]
+    C["Candidate C · 50 steps"] --&gt;|excellent| S3["+1000 steps"]
+
+    classDef reject fill:#fdecec,stroke:#c8483a,color:#7a2b21;
+    classDef confirm fill:#e9f7ef,stroke:#1f9d55,color:#155c33;
+    class S1 reject;
+    class S2,S3 confirm;
+</pre>
 <p>Formalization: $Budget_i = f(Uncertainty_i, Performance_i)$. This mechanism relies on learning-curve prediction (freeze-thaw) to estimate a <em>time-to-target</em> and decide CONTINUE/STOP.</p>
 <h3 id="911-decision-policy"><span class="num sub">9.11</span>Decision Policy</h3>
 <p>An explicit policy turning PRECOG from a simple predictor into an experimental optimization agent:</p>
@@ -687,9 +700,14 @@ PREDICTOR_FAILURE
 <p>and feeds the improvement cycle (meta-dataset → meta-predictor retraining).</p>
 <h3 id="915-scientific-discovery-engine"><span class="num sub">9.15</span>Scientific Discovery Engine</h3>
 <p>Longer-term goal: turn observed correlations into hypotheses, test those hypotheses through controlled experiments (see 9.12), and derive general principles of trainability from them (e.g. a candidate relationship $LR^* \approx f(\text{BatchSize}, \text{GradientNoise}, \text{ModelScale})$ to be experimentally verified).</p>
-<pre class="diagram"><code class="language-text">Experiments → Patterns → Correlations → Hypotheses
-   → Controlled experiments → Causal evidence → New principle
-</code></pre>
+<pre class="mermaid">flowchart LR
+    E[Experiments] --&gt; P[Patterns]
+    P --&gt; Co[Correlations]
+    Co --&gt; H[Hypotheses]
+    H --&gt; CE[Controlled experiments]
+    CE --&gt; CV[Causal evidence]
+    CV --&gt; NP[New principle]
+</pre>
 <hr/>
 <h2 id="10-variables-and-hyperparameters"><span class="num">10</span>Variables and Hyperparameters</h2>
 <h3 id="101-hierarchy-of-target-hyperparameters-of-the-trained-model"><span class="num sub">10.1</span>Hierarchy of target hyperparameters (of the trained model)</h3>
@@ -800,82 +818,60 @@ $$</p>
 <hr/>
 <h2 id="12-the-meta-dataset-precogs-scientific-memory"><span class="num">12</span>The Meta-Dataset: PRECOG's Scientific Memory</h2>
 <p>Every experiment — including every failure — must be recorded with, at minimum:</p>
-<pre class="diagram"><code class="language-text">Experiment
-├── Model        (architecture, depth, width, params, FLOPs, activation, norm.)
-├── Dataset      (size, dimension, entropy, noise, imbalance, diversity)
-├── Hardware     (GPU/CPU, memory, precision, bandwidth)
-├── Initialization
-├── Optimizer, LR, batch size, weight decay, scheduler, warmup
-├── Zero-cost descriptors (SynFlow, SNIP, GraSP, Jacobian, NEAR…)
-├── Training dynamics (gradient norms, loss slope, activation statistics)
-├── Full learning curve
-├── Steps, compute (GPU-hours), memory, time, amount of data, seed
-└── Ground truth (final performance, convergence, real cost)
-</code></pre>
+<pre class="mermaid">flowchart TD
+    Exp[Experiment] --&gt; M["Model&lt;br/&gt;architecture, depth, width, params, FLOPs, activation, norm."]
+    Exp --&gt; D["Dataset&lt;br/&gt;size, dimension, entropy, noise, imbalance, diversity"]
+    Exp --&gt; HW["Hardware&lt;br/&gt;GPU/CPU, memory, precision, bandwidth"]
+    Exp --&gt; Init[Initialization]
+    Exp --&gt; Opt["Optimizer, LR, batch size, weight decay, scheduler, warmup"]
+    Exp --&gt; ZCP["Zero-cost descriptors&lt;br/&gt;SynFlow, SNIP, GraSP, Jacobian, NEAR…"]
+    Exp --&gt; Dyn["Training dynamics&lt;br/&gt;gradient norms, loss slope, activation statistics"]
+    Exp --&gt; Curve[Full learning curve]
+    Exp --&gt; Cost["Steps, compute (GPU-hours), memory, time, amount of data, seed"]
+    Exp --&gt; GT["Ground truth&lt;br/&gt;final performance, convergence, real cost"]
+
+    classDef confirm fill:#e9f7ef,stroke:#1f9d55,color:#155c33;
+    class GT confirm;
+</pre>
 <p>Prediction failures are <strong>kept and labeled</strong> (see Failure Analysis, §9.14): they constitute a learning signal at least as valuable as successes.</p>
 <p><strong>Strict separation:</strong> the meta-dataset is partitioned into TRAIN / VALIDATION / TEST, with the TEST set explicitly locked (never used to improve PRECOG), to avoid <em>benchmark overfitting</em>.</p>
 <hr/>
 <h2 id="13-experience-transfer-and-task-embedding"><span class="num">13</span>Experience Transfer and Task Embedding</h2>
-<pre class="diagram"><code class="language-text">                 New Task
-                    │
-                    ▼
-              Task Encoder
-                    │
-                    ▼
-              Task Embedding
-                    │
-          ┌─────────┴─────────┐
-          ▼                   ▼
-    Similar Tasks       Meta-Dataset
-          │                   │
-          └─────────┬─────────┘
-                    ▼
-              Prior Knowledge
-                    │
-                    ▼
-              Optimization
-</code></pre>
+<pre class="mermaid">flowchart TD
+    NT[New Task] --&gt; TE[Task Encoder]
+    TE --&gt; EMB[Task Embedding]
+    EMB --&gt; ST[Similar Tasks]
+    EMB --&gt; MD[Meta-Dataset]
+    ST --&gt; PK[Prior Knowledge]
+    MD --&gt; PK
+    PK --&gt; OPT[Optimization]
+
+    classDef confirm fill:#e9f7ef,stroke:#1f9d55,color:#155c33;
+    class OPT confirm;
+</pre>
 <p>PRECOG must be able to recognize that a new problem "resembles" a problem already encountered and exploit that similarity as a prior, rather than starting from an uninformed search — this is one of the main expected levers for moving from a merely analytical system to a genuinely intelligent one.</p>
 <hr/>
 <h2 id="14-end-to-end-experimental-pipeline"><span class="num">14</span>End-to-End Experimental Pipeline</h2>
-<pre class="diagram"><code class="language-text">                    ┌──────────────────┐
-                    │  BENCHMARK TASKS │
-                    └────────┬─────────┘
-                             ▼
-                    ┌──────────────────┐
-                    │  PRECOG ANALYSIS │  (PURE mode)
-                    └────────┬─────────┘
-                             ▼
-                    ┌──────────────────┐
-                    │ META-PREDICTOR   │
-                    │ prediction +     │
-                    │ uncertainty      │
-                    └────────┬─────────┘
-                             ▼
-                    ┌──────────────────┐
-                    │ SEARCH ENGINE    │  (BO / Active Learning / Pareto)
-                    └────────┬─────────┘
-                             ▼
-                      TOP CANDIDATES
-                             ▼
-                    ┌──────────────────┐
-                    │ SHORT PROBES     │  (PROBE mode, optional)
-                    └────────┬─────────┘
-                     ┌───────┴────────┐
-                     ▼                ▼
-                 PROMISING          POOR
-                     │                │
-                     ▼                ▼
-               FULL TRAINING     STOP / LEARN
-                     ▼
-                 GROUND TRUTH
-                     ▼
-              META-DATASET UPDATE
-                     ▼
-              FAILURE ANALYSIS + RETRAIN
-                     ▼
-               PRECOG v(n+1)
-</code></pre>
+<pre class="mermaid">flowchart TD
+    BT[Benchmark Tasks] --&gt; PA["PRECOG Analysis&lt;br/&gt;(PURE mode)"]
+    PA --&gt; MP["Meta-Predictor&lt;br/&gt;prediction + uncertainty"]
+    MP --&gt; SE["Search Engine&lt;br/&gt;(BO / Active Learning / Pareto)"]
+    SE --&gt; TC[Top Candidates]
+    TC --&gt; SP["Short Probes&lt;br/&gt;(PROBE mode, optional)"]
+    SP --&gt;|promising| FT[Full Training]
+    SP --&gt;|poor| STOP["Stop / Learn"]
+    FT --&gt; GT[Ground Truth]
+    GT --&gt; MDU[Meta-Dataset Update]
+    MDU --&gt; FA[Failure Analysis + Retrain]
+    FA --&gt; NEXT["PRECOG v(n+1)"]
+
+    classDef reject fill:#fdecec,stroke:#c8483a,color:#7a2b21;
+    classDef confirm fill:#e9f7ef,stroke:#1f9d55,color:#155c33;
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class STOP reject;
+    class FT,GT confirm;
+    class NEXT next;
+</pre>
 <p>This loop never stops after a single iteration: every PRECOG generation must be compared to the previous one under a strictly identical protocol.</p>
 <hr/>
 <h2 id="15-test-protocols"><span class="num">15</span>Test Protocols</h2>
@@ -989,22 +985,18 @@ PRECOG TEST (locked) → never seen, never used to improve PRECOG
 <p>These targets are <strong>progression hypotheses</strong>, formalized as successive gates (§17), never presented as already achieved.</p>
 <hr/>
 <h2 id="17-progression-gates"><span class="num">17</span>Progression Gates</h2>
-<pre class="diagram"><code class="language-text">                PRECOG
-                   │
-             GATE 1: ρ ≥ 0.70 ?
-                   │
-             GATE 2: Recall@10 ≥ 80% ?
-                   │
-             GATE 3: Compute reduction ≥ 50% ?
-                   │
-             GATE 4: Generalization maintained (never-seen data)?
-                   │
-             GATE 5: Recall@10 ≥ 90% ?
-                   │
-             GATE 6: Compute reduction ≥ 70% ?
-                   │
-             PRECOG "advanced level"
-</code></pre>
+<pre class="mermaid">flowchart TD
+    P[PRECOG] --&gt; G1["Gate 1: ρ ≥ 0.70?"]
+    G1 --&gt; G2["Gate 2: Recall@10 ≥ 80%?"]
+    G2 --&gt; G3["Gate 3: Compute reduction ≥ 50%?"]
+    G3 --&gt; G4["Gate 4: Generalization maintained&lt;br/&gt;(never-seen data)?"]
+    G4 --&gt; G5["Gate 5: Recall@10 ≥ 90%?"]
+    G5 --&gt; G6["Gate 6: Compute reduction ≥ 70%?"]
+    G6 --&gt; ADV["PRECOG 'advanced level'"]
+
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class ADV next;
+</pre>
 <p>Each gate is validated by independent metrics, on locked datasets, before considering the next generation.</p>
 <hr/>
 <h2 id="18-comparison-baselines"><span class="num">18</span>Comparison Baselines</h2>
@@ -1021,15 +1013,18 @@ Meta-learning HPO (without PRECOG's additional layers)
 <hr/>
 <h2 id="19-ablation-strategy"><span class="num">19</span>Ablation Strategy</h2>
 <h3 id="191-pipeline-component-ablation"><span class="num sub">19.1</span>Pipeline component ablation</h3>
-<pre class="diagram"><code class="language-text">PRECOG-A = Zero-Cost only
-PRECOG-B = + NEAR
-PRECOG-C = + Initialization analysis
-PRECOG-D = + Meta-Learning
-PRECOG-E = + Bayesian Optimization
-PRECOG-F = + Adaptive Short Probe
-PRECOG-G = + Active Learning / Uncertainty
-PRECOG-H = + Causal Discovery / OOD detection
-</code></pre>
+<pre class="mermaid">flowchart LR
+    A["PRECOG-A&lt;br/&gt;Zero-Cost only"] --&gt; B["+ NEAR"]
+    B --&gt; C["+ Initialization analysis"]
+    C --&gt; D["+ Meta-Learning"]
+    D --&gt; E["+ Bayesian Optimization"]
+    E --&gt; F["+ Adaptive Short Probe"]
+    F --&gt; G["+ Active Learning / Uncertainty"]
+    G --&gt; H["+ Causal Discovery / OOD detection"]
+
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class H next;
+</pre>
 <p>Expected table example (a template, not real results):</p>
 <div class="table-scroll"><table>
 <thead>
@@ -1185,41 +1180,39 @@ $$</p>
 <p>This constraint must be measured at every evaluation, not merely assumed. A system that is theoretically accurate but whose inference is too costly (e.g. a meta-predictor that itself requires enormous compute) must be considered an economic failure, even with a good ranking score.</p>
 <hr/>
 <h2 id="25-development-roadmap"><span class="num">25</span>Development Roadmap</h2>
-<pre class="diagram"><code class="language-text">V1 — Foundations
-  Learning Rate, Batch Size, Optimizer, Initialization
-  (basic zero-cost analysis, no meta-learning)
+<pre class="mermaid">flowchart TD
+    V1["V1 — Foundations&lt;br/&gt;Learning Rate, Batch Size, Optimizer, Initialization&lt;br/&gt;(basic zero-cost analysis, no meta-learning)"]
+    V2["V2 — Full configuration&lt;br/&gt;Weight Decay, Warmup, Scheduler, Gradient Accumulation"]
+    V3["V3 — Architecture&lt;br/&gt;Dropout, depth/width/activation/normalization"]
+    V4["V4 — Intelligence&lt;br/&gt;Meta-learning, Task Embeddings, NEAR, combined Zero-Cost proxies"]
+    V5["V5 — Adaptive search&lt;br/&gt;Active Learning, Bayesian Optimization, Adaptive Short-Probe"]
+    V6["V6 — Science&lt;br/&gt;Causal Discovery, OOD Detection, Failure Analysis, Scientific Discovery Engine"]
+    V1 --&gt; V2 --&gt; V3 --&gt; V4 --&gt; V5 --&gt; V6
 
-V2 — Full configuration
-  Weight Decay, Warmup, Scheduler, Gradient Accumulation
-
-V3 — Architecture
-  Dropout, Architecture (depth/width/activation/normalization)
-
-V4 — Intelligence
-  Meta-learning, Task Embeddings, NEAR, combined Zero-Cost proxies
-
-V5 — Adaptive search
-  Active Learning, Bayesian Optimization, Adaptive Short-Probe
-
-V6 — Science
-  Causal Discovery, OOD Detection, Failure Analysis,
-  Scientific Discovery Engine
-</code></pre>
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class V6 next;
+</pre>
 <h3 id="scientific-progression-by-phase-indicative">Scientific progression by phase (indicative)</h3>
-<pre class="diagram"><code class="language-text">Phase A: analytical foundations (Zero-Cost, NEAR, Initialization)
-Phase B: meta-learning + Bayesian Optimization
-Phase C: uncertainty + active learning + adaptive acquisition
-Phase D: learning-curve prediction + adaptive probe + failure analysis
-Phase E: validation — never-seen tasks, multi-seed, statistical tests, reproducibility
-</code></pre>
+<pre class="mermaid">flowchart LR
+    A["Phase A&lt;br/&gt;analytical foundations"] --&gt; B["Phase B&lt;br/&gt;meta-learning + Bayesian Optimization"]
+    B --&gt; C["Phase C&lt;br/&gt;uncertainty + active learning"]
+    C --&gt; D["Phase D&lt;br/&gt;learning-curve prediction + adaptive probe"]
+    D --&gt; E["Phase E&lt;br/&gt;validation"]
+
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class E next;
+</pre>
 <h3 id="experimental-curriculum">Experimental curriculum</h3>
-<pre class="diagram"><code class="language-text">Level 1: MLP on synthetic datasets
-Level 2: CNN on vision
-Level 3: ResNet / modern architectures
-Level 4: Transformers
-Level 5: LLM fine-tuning
-Level 6: never-seen models and datasets (ultimate generalization test)
-</code></pre>
+<pre class="mermaid">flowchart LR
+    L1["Level 1&lt;br/&gt;MLP on synthetic datasets"] --&gt; L2["Level 2&lt;br/&gt;CNN on vision"]
+    L2 --&gt; L3["Level 3&lt;br/&gt;ResNet / modern architectures"]
+    L3 --&gt; L4["Level 4&lt;br/&gt;Transformers"]
+    L4 --&gt; L5["Level 5&lt;br/&gt;LLM fine-tuning"]
+    L5 --&gt; L6["Level 6&lt;br/&gt;never-seen models and datasets&lt;br/&gt;(ultimate generalization test)"]
+
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class L6 next;
+</pre>
 <hr/>
 <h2 id="26-success-criteria"><span class="num">26</span>Success Criteria</h2>
 <p>A PRECOG milestone is only considered reached if, <strong>simultaneously</strong>, on a locked test set never used for training:</p>
@@ -1258,22 +1251,17 @@ $$</p>
 <li>On request, validate the best hypotheses via a minimal budget in <strong>PROBE</strong> mode.</li>
 <li>Systematically log the experiment (including production usage) into the meta-dataset, for continuous improvement.</li>
 </ol>
-<pre class="diagram"><code class="language-text">Untrained model + Dataset (stats) + Hardware
-                    │
-                    ▼
-              PRECOG (PURE mode)
-                    │
-                    ▼
-     Hyperparameter distribution + confidence
-                    │
-                    ▼
-        Pareto-optimal set of configurations
-                    │
-             (optional) PROBE
-                    │
-                    ▼
-        Recommended configuration + justification
-</code></pre>
+<pre class="mermaid">flowchart TD
+    IN["Untrained model + Dataset (stats) + Hardware"] --&gt; PURE["PRECOG (PURE mode)"]
+    PURE --&gt; HD["Hyperparameter distribution + confidence"]
+    HD --&gt; PO["Pareto-optimal set of configurations"]
+    PO --&gt;|optional| PROBE[PROBE]
+    PO --&gt; REC["Recommended configuration + justification"]
+    PROBE --&gt; REC
+
+    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
+    class REC next;
+</pre>
 <hr/>
 <h2 id="30-synthesis-the-idea-that-distinguishes-precog-from-classic-hpo"><span class="num">30</span>Synthesis — the idea that distinguishes PRECOG from classic HPO</h2>
 <blockquote>
