@@ -80,13 +80,30 @@
   header.hero .inner {
     max-width: 880px;
     margin: 0 auto;
-    padding: 64px 24px;
+    padding: 60px 24px;
   }
   header.hero h1 {
-    font-size: clamp(1.9rem, 4vw, 2.5rem);
-    margin: 0 0 22px;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  header.hero .subtitle {
+    font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+    font-weight: 500;
+    color: #2b2f36;
+    margin: 10px 0 0;
+    max-width: 46ch;
+  }
+  header.hero .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 14px 0 24px;
   }
   header.hero .badges { display: flex; flex-wrap: wrap; gap: 8px; }
   header.hero .badges img { display: block; height: 20px; }
@@ -195,7 +212,9 @@
 <body>
   <header class="hero">
     <div class="inner">
-      <h1>PRECOG — Can Pre-Training Signals Predict Trainability?</h1>
+      <h1>PRECOG</h1>
+      <p class="subtitle">Predictive Configuration &amp; Trainability Engine</p>
+      <p class="kicker">Vision document &middot; scientific specification &middot; research roadmap</p>
       <div class="badges">
         <img src="https://github.com/rustnew/precog-trainability/actions/workflows/reproduce.yml/badge.svg" alt="Reproduce CI status" width="127" height="20">
         <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" width="82" height="20">
