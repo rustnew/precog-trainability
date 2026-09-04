@@ -185,10 +185,9 @@ rerunning any training.
 ## What this is not
 
 Not a finished system. No gate in the full spec's success criteria is met
-yet (see [docs.md §17, §26](docs.md)). This is a snapshot of an ongoing,
-openly-documented research effort — the full project (40+ dated reports,
-every negative result kept) lives at
-[github.com/NEURAX-canvas/PRECOG](https://github.com/NEURAX-canvas/PRECOG).
+yet (see [docs.md §17, §26](docs.md)). This is a curated public snapshot
+of an ongoing, openly-documented internal research effort (40+ dated
+reports, every negative result kept).
 
 ## Repository layout
 
