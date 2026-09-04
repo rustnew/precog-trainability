@@ -80,57 +80,16 @@
   header.hero .inner {
     max-width: 880px;
     margin: 0 auto;
-    padding: 72px 24px 44px;
+    padding: 64px 24px;
   }
-  header.hero .eyebrow {
-    font-family: var(--mono);
-    font-size: 12.5px;
-    font-weight: 600;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  header.hero h1 {
+    font-size: clamp(1.9rem, 4vw, 2.5rem);
+    margin: 0 0 22px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
   }
-  header.hero .eyebrow::before {
-    content: "";
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent);
-    display: inline-block;
-  }
-  header.hero h1 { font-size: clamp(2rem, 4vw, 2.6rem); margin: 0 0 14px; line-height: 1.15; letter-spacing: -0.01em; }
-  header.hero .tagline { color: var(--muted); margin: 0 0 20px; max-width: 62ch; font-size: 1.08rem; }
-  header.hero .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+  header.hero .badges { display: flex; flex-wrap: wrap; gap: 8px; }
   header.hero .badges img { display: block; height: 20px; }
-  header.hero .links { display: flex; flex-wrap: wrap; gap: 10px; }
-  header.hero .links a {
-    font-family: var(--mono);
-    font-size: 13px;
-    font-weight: 500;
-    text-decoration: none;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: 1px solid var(--line);
-    color: var(--ink);
-    background: var(--bg);
-    transition: border-color 0.15s, background 0.15s;
-  }
-  header.hero .links a:hover { border-color: var(--accent); background: var(--accent-soft); }
-  header.hero .links a.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  header.hero .links a.primary:hover { background: #000; }
-  header.hero .disclaimer {
-    margin: 32px 0 0;
-    padding: 12px 16px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--bg);
-    color: var(--muted);
-    font-size: 0.85rem;
-    max-width: 62ch;
-  }
-  header.hero .disclaimer strong { color: var(--ink); }
 
   .layout {
     max-width: 1080px;
@@ -236,20 +195,12 @@
 <body>
   <header class="hero">
     <div class="inner">
-      <p class="eyebrow">Full specification &middot; docs.md</p>
-      <h1>PRECOG: Predictive Configuration &amp; Trainability Engine</h1>
-      <p class="tagline">Can signals computed on an <strong>untrained</strong> network — before a single optimizer step — predict which hyperparameters will actually train well? The complete vision document, scientific specification, and research roadmap.</p>
+      <h1>PRECOG — Can Pre-Training Signals Predict Trainability?</h1>
       <div class="badges">
         <img src="https://github.com/rustnew/precog-trainability/actions/workflows/reproduce.yml/badge.svg" alt="Reproduce CI status" width="127" height="20">
         <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" width="82" height="20">
         <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+" width="94" height="20">
       </div>
-      <div class="links">
-        <a class="primary" href="https://github.com/rustnew/precog-trainability">View the repository</a>
-        <a href="https://github.com/rustnew/precog-trainability#readme">Verified results (README)</a>
-        <a href="https://github.com/rustnew/precog-trainability/blob/main/docs.md">Raw source (docs.md)</a>
-      </div>
-      <p class="disclaimer"><strong>Methodological note:</strong> this is a research specification, not a results report. Section 0 below states plainly which numbers are experimental targets versus what has actually been measured — see the README for verified findings, including a corrected result and a documented bug.</p>
     </div>
   </header>
 
