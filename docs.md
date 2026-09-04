@@ -1,6 +1,6 @@
-# PRECOG
-## Predictive Configuration & Trainability Engine
-### Vision document, scientific specification, and research roadmap
+## Methodological note:
+This is a research specification, not a results report.
+Section 0 below states plainly which numbers are experimental targets versus what has actually been measured - see the [README](https://github.com/rustnew/precog-trainability/blob/main/README.md) for verified findings, including a corrected result and a documented bug.
 
 ---
 
