@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PRECOG — Predictive Configuration &amp; Trainability Engine</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a56db'/%3E%3Ctext x='16' y='23' font-family='monospace,sans-serif' font-size='19' font-weight='700' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
 <meta name="description" content="PRECOG's full research specification: predicting a network's trainability before a single training step, from hypotheses and architecture to metrics, gates, and known limitations.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="PRECOG — Predictive Configuration &amp; Trainability Engine">
@@ -100,7 +101,9 @@
     display: inline-block;
   }
   header.hero h1 { font-size: clamp(2rem, 4vw, 2.6rem); margin: 0 0 14px; line-height: 1.15; letter-spacing: -0.01em; }
-  header.hero .tagline { color: var(--muted); margin: 0 0 28px; max-width: 62ch; font-size: 1.08rem; }
+  header.hero .tagline { color: var(--muted); margin: 0 0 20px; max-width: 62ch; font-size: 1.08rem; }
+  header.hero .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+  header.hero .badges img { display: block; height: 20px; }
   header.hero .links { display: flex; flex-wrap: wrap; gap: 10px; }
   header.hero .links a {
     font-family: var(--mono);
@@ -236,6 +239,11 @@
       <p class="eyebrow">Full specification &middot; docs.md</p>
       <h1>PRECOG: Predictive Configuration &amp; Trainability Engine</h1>
       <p class="tagline">Can signals computed on an <strong>untrained</strong> network — before a single optimizer step — predict which hyperparameters will actually train well? The complete vision document, scientific specification, and research roadmap.</p>
+      <div class="badges">
+        <img src="https://github.com/rustnew/precog-trainability/actions/workflows/reproduce.yml/badge.svg" alt="Reproduce CI status" width="127" height="20">
+        <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" width="82" height="20">
+        <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+" width="94" height="20">
+      </div>
       <div class="links">
         <a class="primary" href="https://github.com/rustnew/precog-trainability">View the repository</a>
         <a href="https://github.com/rustnew/precog-trainability#readme">Verified results (README)</a>
