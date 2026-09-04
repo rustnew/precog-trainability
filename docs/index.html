@@ -873,134 +873,35 @@ $$</p>
     MDU --&gt; FA[Failure Analysis + Retrain]
     FA --&gt; NEXT["PRECOG v(n+1)"]
 
-    classDef reject fill:#fdecec,stroke:#c8483a,color:#7a2b21;
-    classDef confirm fill:#e9f7ef,stroke:#1f9d55,color:#155c33;
-    classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
-    class STOP reject;
-    class FT,GT confirm;
-    class NEXT next;
-</pre>
-<p>This loop never stops after a single iteration: every PRECOG generation must be compared to the previous one under a strictly identical protocol.</p>
-<hr/>
-<h2 id="15-test-protocols"><span class="num">15</span>Test Protocols</h2>
-<div class="table-scroll"><table>
-<thead>
-<tr>
-<th>Protocol</th>
-<th>Question</th>
-<th>Main metric</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>P1 — Ranking</strong></td>
-<td>Does PRECOG rank configurations correctly?</td>
-<td>Spearman ρ, Kendall τ</td>
-</tr>
-<tr>
-<td><strong>P2 — Top-K</strong></td>
-<td>Does it retrieve the best configurations?</td>
-<td>Recall@K</td>
-</tr>
-<tr>
-<td><strong>P3 — Convergence</strong></td>
-<td>Does the chosen configuration converge faster?</td>
-<td>Steps/Time-to-Target</td>
-</tr>
-<tr>
-<td><strong>P4 — Compute</strong></td>
-<td>How much compute is saved?</td>
-<td>GPU-hours / FLOPs</td>
-</tr>
-<tr>
-<td><strong>P5 — Data efficiency</strong></td>
-<td>Same quality with less data?</td>
-<td>Samples-to-Target</td>
-</tr>
-<tr>
-<td><strong>P6 — Generalization</strong></td>
-<td>Does it work on a never-seen model/dataset?</td>
-<td>Out-of-distribution performance</td>
-</tr>
-</tbody>
-</table></div>
-<h3 id="151-trainvalidationtest-separation"><span class="num sub">15.1</span>TRAIN/VALIDATION/TEST separation</h3>
-<pre class="diagram"><code class="language-text">PRECOG TRAIN        → known datasets and architectures, experiment history
-PRECOG VALIDATION   → different datasets, partially new architectures
-PRECOG TEST (locked) → never seen, never used to improve PRECOG
-</code></pre>
-<h3 id="152-reference-benchmarks-for-the-initial-phase"><span class="num sub">15.2</span>Reference benchmarks for the initial phase</h3>
-<ul>
-<li><strong>NATS-Bench</strong> (successor to the now-deprecated NAS-Bench-201): a reference architecture space with pre-computed performance (CIFAR-10, CIFAR-100, ImageNet16-120) — useful for testing ranking without having to train every architecture oneself.</li>
-<li><strong>NAS-Bench-Suite-Zero / JAHS-Bench / HPO-B</strong>: actively maintained benchmarks, the first specifically designed to evaluate zero-cost proxies (see stack.md §4 for the rationale behind these choices over the now poorly-maintained HPOBench).</li>
-<li><strong>Synthetic laboratory</strong> (generated in-house): fully controlled datasets and models (noise, entropy, dimensionality, depth, width), enabling candidate causal variables to be isolated before moving to real benchmarks.</li>
-</ul>
-<h3 id="153-multi-seed-and-statistical-tests"><span class="num sub">15.3</span>Multi-seed and statistical tests</h3>
-<p>Every important experiment is repeated over several seeds, with mean, standard deviation, and confidence interval (95% CI) computed. Comparisons between methods (PRECOG vs. Random, vs. BO, vs. Hyperband, vs. Vizier) use appropriate statistical tests (e.g. a Wilcoxon signed-rank test rather than a t-test when parametric assumptions aren't guaranteed), to avoid declaring superiority based on a lucky seed.</p>
-<hr/>
-<h2 id="16-metrics-and-objectives-to-be-demonstrated-not-guaranteed"><span class="num">16</span>Metrics and Objectives (to be demonstrated, not guaranteed)</h2>
-<div class="table-scroll"><table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Definition</th>
-<th>Experimental target</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Ranking correlation</td>
-<td>Spearman ρ / Kendall τ between PRECOG's ranking and the real ranking</td>
-<td>ρ ≥ 0.80 then ≥ 0.90</td>
-</tr>
-<tr>
-<td>Top-K recall</td>
-<td>$Recall@K = \|\text{PredictedTopK} \cap \text{TrueTopK}\| / K$</td>
-<td>Recall@10 ≥ 80% then ≥ 90%</td>
-</tr>
-<tr>
-<td>Compute reduction</td>
-<td>$1 - C_{PRECOG}/C_{baseline}$</td>
-<td>≥ 50% then ≥ 70%</td>
-</tr>
-<tr>
-<td>Performance retention</td>
-<td>$Performance_{PRECOG}/Performance_{oracle}$</td>
-<td>≥ 99% (or a tolerance defined a priori)</td>
-</tr>
-<tr>
-<td>Data efficiency</td>
-<td>$Samples_{baseline}/Samples_{PRECOG}$ for equal target performance</td>
-<td>≥ 30–50% reduction, to be refined</td>
-</tr>
-<tr>
-<td>Time/Steps-to-Target</td>
-<td>Reduction in time/number of steps to reach a target</td>
-<td>≥ 50% reduction</td>
-</tr>
-<tr>
-<td>Prediction error (learning curve)</td>
-<td>$\lvert \text{Prediction} - \text{Actual} \rvert$</td>
-<td>≈ 5–10% depending on the metric</td>
-</tr>
-<tr>
-<td>Generalization</td>
-<td>Recall@K on never-seen tasks/architectures/datasets</td>
-<td>same order of magnitude as on known data</td>
-</tr>
-</tbody>
-</table></div>
-<p>These targets are <strong>progression hypotheses</strong>, formalized as successive gates (§17), never presented as already achieved.</p>
-<hr/>
-<h2 id="17-progression-gates"><span class="num">17</span>Progression Gates</h2>
-<pre class="mermaid">flowchart TD
-    P[PRECOG] --&gt; G1["Gate 1: ρ ≥ 0.70?"]
-    G1 --&gt; G2["Gate 2: Recall@10 ≥ 80%?"]
-    G2 --&gt; G3["Gate 3: Compute reduction ≥ 50%?"]
-    G3 --&gt; G4["Gate 4: Generalization maintained&lt;br/&gt;(never-seen data)?"]
-    G4 --&gt; G5["Gate 5: Recall@10 ≥ 90%?"]
-    G5 --&gt; G6["Gate 6: Compute reduction ≥ 70%?"]
-    G6 --&gt; ADV["PRECOG 'advanced level'"]
+    <section>
+      <h2><span class="num">04</span>A bug we found but can't fix</h2>
+      <p>
+        <code>jacob_cov</code> never once recommends "He init" across 60 test
+        tasks — including the 10 where it's genuinely fastest. The cause is
+        structural: Xavier and He (zero-biased networks) draw from the same
+        underlying Gaussian values, differing only by a positive scale — and
+        <code>jacob_cov</code> only reads activation <em>sign</em>, which scaling
+        cannot flip.
+      </p>
+      <pre><code>jacob_cov(He-init network)  ==  jacob_cov(Xavier-init network)</code></pre>
+      <p>
+        exactly, for the same seed — checked across all 312 tasks, max difference
+        is <code>0.0</code>. Two other proxies (<code>effective_rank</code>,
+        <code>jacobian_condition_mean</code>) share the property for the same
+        reason. Three attempted fixes, all failed: raw and population-normalized
+        tie-breaking with <code>gradient_norm</code> (same structural blindness,
+        different proxy), and — the one thing that should have worked, since
+        it stops reading a PURE-mode proxy entirely — a bounded 50-step
+        <a href="https://github.com/rustnew/precog-trainability/blob/main/docs.md">PROBE-mode</a>
+        run on just the tied candidates. It does recover some "he" picks
+        (recall 0%→30% on the 10 tasks where "he" is truly best), but net
+        <em>regret gets worse</em> (+14.6→+45.4 steps): 50 real training steps
+        is enough to make "he" look locally better, not enough to see that it
+        sometimes never converges at all within budget.
+      </p>
+      <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-02T08-04-49Z_explore_scale_invariance_blindspot.md">Full audit of all 11 proxies →</a>
+      <a class="finding-link" href="https://github.com/rustnew/precog-trainability/blob/main/results/reports/2026-09-03T12-59-38Z_explore_probe_tiebreak.md">Why the PROBE-mode fix doesn't net out →</a>
+    </section>
 
     classDef next fill:#eef2ff,stroke:#1a56db,stroke-width:2px,color:#1a56db;
     class ADV next;

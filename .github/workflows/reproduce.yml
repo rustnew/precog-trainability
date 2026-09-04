@@ -45,3 +45,6 @@ jobs:
 
       - name: LSUV data-aware init (4th candidate, underperformed)
         run: python scripts/explore_lsuv_init.py
+
+      - name: PROBE-mode tie-break for the Xavier/He blind spot (raises he-recall, nets worse regret)
+        run: python scripts/explore_probe_tiebreak.py
