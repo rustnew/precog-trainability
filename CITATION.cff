@@ -6,7 +6,7 @@ authors:
   - family-names: "Fossouo"
     given-names: "Martial"
 repository-code: "https://github.com/rustnew/precog-trainability"
-url: "https://github.com/NEURAX-canvas/PRECOG"
+url: "https://github.com/rustnew/precog-trainability"
 version: 0.1.0
 date-released: "2026-09-02"
 license: MIT

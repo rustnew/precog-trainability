@@ -9,11 +9,13 @@ A research prototype testing whether "zero-cost" signals computed on an
 hyperparameters will actually train well. Full spec in [docs.md](docs.md).
 **[Project page →](https://rustnew.github.io/precog-trainability/)**
 
-This is a curated subset of a larger project. It exists to show three
-things honestly, in order: **a real positive finding, a headline number
-that turned out to be wrong and how we caught it, and a mechanistic bug we
-found but could not fix.** If you work in NAS / zero-cost proxies /
-meta-learning, the last two sections are where we'd like your help.
+Maintained by a small applied-research team, hosted here under a
+personal account for now. This is a curated subset of a larger project.
+It exists to show three things honestly, in order: **a real positive
+finding, a headline number that turned out to be wrong and how we caught
+it, and a mechanistic bug we found but could not fix.** If you work in
+NAS / zero-cost proxies / meta-learning, the last two sections are where
+we'd like your help.
 
 ## TL;DR
 
@@ -183,10 +185,9 @@ rerunning any training.
 ## What this is not
 
 Not a finished system. No gate in the full spec's success criteria is met
-yet (see [docs.md §17, §26](docs.md)). This is a snapshot of an ongoing,
-openly-documented research effort — the full project (40+ dated reports,
-every negative result kept) lives at
-[github.com/NEURAX-canvas/PRECOG](https://github.com/NEURAX-canvas/PRECOG).
+yet (see [docs.md §17, §26](docs.md)). This is a curated public snapshot
+of an ongoing, openly-documented internal research effort (40+ dated
+reports, every negative result kept).
 
 ## Repository layout
 
