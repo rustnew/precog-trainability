@@ -9,11 +9,13 @@ A research prototype testing whether "zero-cost" signals computed on an
 hyperparameters will actually train well. Full spec in [docs.md](docs.md).
 **[Project page →](https://rustnew.github.io/precog-trainability/)**
 
-This is a curated subset of a larger project. It exists to show three
-things honestly, in order: **a real positive finding, a headline number
-that turned out to be wrong and how we caught it, and a mechanistic bug we
-found but could not fix.** If you work in NAS / zero-cost proxies /
-meta-learning, the last two sections are where we'd like your help.
+Maintained by a small applied-research team, hosted here under a
+personal account for now. This is a curated subset of a larger project.
+It exists to show three things honestly, in order: **a real positive
+finding, a headline number that turned out to be wrong and how we caught
+it, and a mechanistic bug we found but could not fix.** If you work in
+NAS / zero-cost proxies / meta-learning, the last two sections are where
+we'd like your help.
 
 ## TL;DR
 
